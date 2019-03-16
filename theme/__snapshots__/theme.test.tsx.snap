@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`react inline theme 1`] = `"<div class=\\"_0 _1\\">Wow!</div>"`;
+
+exports[`react with context 1`] = `"<div class=\\"_2 _3\\">Wow!</div><i class=\\"_0 _1\\"></i>,"`;
+
+exports[`react without context 1`] = `"<div class=\\"\\">Wow!</div>"`;
