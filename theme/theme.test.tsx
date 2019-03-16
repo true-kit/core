@@ -145,6 +145,7 @@ describe('createThemeFor', () => {
 			'.host--size--small': {fontSize: '50%'},
 			'.host--disabled': {opacity: .5},
 		});
+
 		expect(theme.classes).toEqual({
 			host: {
 				$root: '_0',
