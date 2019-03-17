@@ -1,5 +1,8 @@
 import { IRuleDefinitions } from '@artifact-project/css';
 
+export type LikeComponent<T extends Theme<any>> = (props: {theme?: T}) => any;
+export type GetComponentTheme<C> = C extends (props: {theme?: infer T}) => any ? T : never;
+
 export type ThemeModsSpec = {
 	[name:string]: string | boolean | undefined;
 }
@@ -18,7 +21,7 @@ export type Theme<TS extends ThemeSpec> = {
 		host: Required<TS['host']>;
 		elements: Required<TS['elements']>;
 	};
-	readonly Owner: Function;
+	readonly Owner: LikeComponent<Theme<TS>>;
 	readonly cssRules: IRuleDefinitions;
 	readonly registry: object | null;
 
@@ -178,14 +181,30 @@ export type ThemeElementsRules<E extends ThemeElementsSpec> = {
 	;
 }
 
-export type MapOfTheme = Map<Function, Theme<any>>;
+export type ThemeRegistry = {
+	map: Map<LikeComponent<any>, Theme<any>>;
+	overrides: ThemeOverrideIndex;
+}
+
+export type ThemeOverride = {
+	theme: Theme<any>;
+	xpath: LikeComponent<any>[];
+}
+
+export type ThemeOverrideIndex = Map<LikeComponent<any>, ThemeOverride>;
 
 export type ThemeProviderValue = {
 	parent?: ThemeProviderValue;
-	value: MapOfTheme;
-};
+	value: ThemeRegistry;
+}
 
 export type ThemeProviderProps = {
-	value: MapOfTheme;
+	value: ThemeRegistry;
 	children: React.ReactNode | React.ReactNode[];
+}
+
+export type ThemeScopeEnv = null | {
+	parent: ThemeScopeEnv;
+	Owner: LikeComponent<any>;
+	ctx?: ThemeProviderValue;
 }

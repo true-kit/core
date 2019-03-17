@@ -3,8 +3,10 @@ import * as ReactDOM from 'react-dom';
 import {
 	createThemeFor,
 	getTheme,
-	composeThemes,
+	createThemeRegistry,
+	createThemeOverrideFor,
 	ThemeProvider,
+	withThemeScopeEnv,
 } from './theme';
 import { resetCSS } from '@artifact-project/css';
 import { Theme } from './theme.types';
@@ -12,7 +14,7 @@ import { Theme } from './theme.types';
 // import { now } from '@perf-tools/performance';
 
 type TextProps = {
-	children?: React.ReactChild;
+	children?: React.ReactNode;
 	size?: 'big' | 'small';
 	block?: boolean;
 	type?: 'default' | 'error';
@@ -30,29 +32,33 @@ type TextProps = {
 type IconProps = {
 	size?: 'big' | 'small';
 	theme?: Theme<{
-		host: Pick<TextProps, 'size'>;
+		host: Pick<IconProps, 'size'>;
 		elements: {
 		};
 	}>;
 };
 
 function Text(props: TextProps) {
-	const hostTheme = getTheme(Text, props).for('host');
-	const result = <div className={hostTheme}>{props.children}</div>;
+	return withThemeScopeEnv(Text, () => {
+		const hostTheme = getTheme(Text, props).for('host');
+		const result = <div className={hostTheme}>{props.children}</div>;
 
-	props.size && hostTheme.set('size', props.size);
-	props.disabled && hostTheme.set('disabled', true);
+		props.size && hostTheme.set('size', props.size);
+		props.disabled && hostTheme.set('disabled', true);
 
-	return result;
+		return result;
+	});
 }
 
 function Icon(props: IconProps) {
-	const hostTheme = getTheme(Icon, props).for('host');
-	const result = <i className={hostTheme}/>;
+	return withThemeScopeEnv(Icon, () => {
+		const hostTheme = getTheme(Icon, props).for('host');
+		const result = <i className={hostTheme}/>;
 
-	props.size && hostTheme.set('size', props.size);
+		props.size && hostTheme.set('size', props.size);
 
-	return result;
+		return result;
+	});
 }
 
 beforeEach(() => {
@@ -252,17 +258,17 @@ describe('createThemeFor', () => {
 	});
 });
 
+const root = document.createElement('div');
+
+function render(fragment: JSX.Element) {
+	ReactDOM.render(
+		fragment,
+		root,
+	);
+	return root.innerHTML;
+}
+
 describe('react', () => {
-	const root = document.createElement('div');
-
-	function render(fragment: JSX.Element) {
-		ReactDOM.render(
-			fragment,
-			root,
-		);
-		return root.innerHTML;
-	}
-
 	it('inline theme', () => {
 		const theme = createThemeFor(Text)({
 			host: {
@@ -286,7 +292,7 @@ describe('react', () => {
 	});
 
 	it('with context', () => {
-		const rootTheme = composeThemes(
+		const rootTheme = createThemeRegistry([
 			createThemeFor(Icon)({
 				host: {
 					display: 'inline-block',
@@ -296,9 +302,9 @@ describe('react', () => {
 				},
 				elements: {},
 			}),
-		);
+		]);
 
-		const theme = composeThemes(
+		const theme = createThemeRegistry([
 			createThemeFor(Text)({
 				host: {
 					color: '#333',
@@ -308,7 +314,8 @@ describe('react', () => {
 				},
 				elements: {},
 			}),
-		);
+		]);
+
 		expect(render(
 			<ThemeProvider value={rootTheme}>
 				<ThemeProvider value={theme}>
@@ -320,6 +327,53 @@ describe('react', () => {
 	});
 });
 
+describe('overrides', () => {
+	it('createThemeOverrideFor', () => {
+		const textTheme = createThemeFor(Text)({
+			host: {color: '#333'},
+			elements: {},
+		});
+		const iconTheme = createThemeFor(Icon)({
+			host: {color: 'black'},
+			elements: {},
+		});
+		const redIconTheme = createThemeFor(Icon)({
+			host: {color: 'red'},
+			elements: {},
+		});
+		const blueIconTheme = createThemeFor(Icon)({
+			host: {color: 'blue'},
+			elements: {},
+		});
+		const rootTheme = createThemeRegistry([textTheme, iconTheme], []);
+		const redTheme = createThemeRegistry(null, [createThemeOverrideFor(Text, Icon)(redIconTheme)]);
+		const blueTheme = createThemeRegistry(null, [createThemeOverrideFor(Text, Icon)(blueIconTheme)]);
+		const icon = <Icon size="small"/>;
+
+		expect(render(
+			<ThemeProvider value={rootTheme}>
+				<ThemeProvider value={redTheme}>
+					<Text>{'\n'}
+						{'\t'}red: <Icon size="small"/>{'\n'}
+					</Text>{'\n'}
+
+					<Text>{'\n'}
+						<ThemeProvider value={blueTheme}>
+							{'\t'}red: {icon}{'\n'}
+							{'\t'}<Text>{'\n'}
+								{'\t\t'}blue: {icon}{'\n'}
+							{'\t'}</Text>
+						</ThemeProvider>{'\n'}
+					</Text>{'\n'}
+
+					black: <Icon size="small"/>{'\n'}
+				</ThemeProvider>
+
+				black: <Icon size="small"/>
+			</ThemeProvider>,
+		)).toMatchSnapshot();
+	});
+});
 
 // it('performance', () => {
 // 	type TestProps = {

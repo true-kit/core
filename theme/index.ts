@@ -2,9 +2,10 @@ export {
 	getTheme,
 	ThemeProvider,
 	createThemeFor,
-	composeThemes,
+	createThemeRegistry,
 } from './theme';
 
 export {
 	Theme,
+	ThemeRegistry,
 } from './theme.types';

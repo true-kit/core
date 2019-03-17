@@ -1,5 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`overrides createThemeOverrideFor 1`] = `
+"<div class=\\"_0\\">
+	red: <i class=\\"_2\\"></i>
+</div>
+<div class=\\"_0\\">
+	red: <i class=\\"_2\\"></i>
+	<div class=\\"_0\\">
+		blue: <i class=\\"_3\\"></i>
+	</div>
+</div>
+black: <i class=\\"_1\\"></i>
+black: <i class=\\"_1\\"></i>"
+`;
+
 exports[`react inline theme 1`] = `"<div class=\\"_0 _1\\">Wow!</div>"`;
 
 exports[`react with context 1`] = `"<div class=\\"_2 _3\\">Wow!</div><i class=\\"_0 _1\\"></i>,"`;
