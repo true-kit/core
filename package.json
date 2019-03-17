@@ -1,8 +1,8 @@
 {
-  "name": "@truekit/theme",
+  "name": "@truekit/core",
   "version": "0.1.0",
   "description": "Theme in JS based on @artifact-project/css.",
-  "main": "theme.ts",
+  "main": "index.ts",
   "scripts": {
     "test": "jest --coverage"
   },
