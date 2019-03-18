@@ -6,10 +6,10 @@ import {
 	createThemeRegistry,
 	createThemeOverrideFor,
 	ThemeProvider,
-	withThemeScopeEnv,
 } from './theme';
 import { resetCSS } from '@artifact-project/css';
 import { Theme } from './theme.types';
+import { withEnvScope } from '../env/env';
 // import * as classnames from 'classnames';
 // import { now } from '@perf-tools/performance';
 
@@ -33,13 +33,12 @@ type IconProps = {
 	size?: 'big' | 'small';
 	theme?: Theme<{
 		host: Pick<IconProps, 'size'>;
-		elements: {
-		};
+		elements: {};
 	}>;
 };
 
 function Text(props: TextProps) {
-	return withThemeScopeEnv(Text, () => {
+	return withEnvScope(Text, null, () => {
 		const hostTheme = getTheme(Text, props).for('host');
 		const result = <div className={hostTheme}>{props.children}</div>;
 
@@ -51,7 +50,7 @@ function Text(props: TextProps) {
 }
 
 function Icon(props: IconProps) {
-	return withThemeScopeEnv(Icon, () => {
+	return withEnvScope(Icon, null, () => {
 		const hostTheme = getTheme(Icon, props).for('host');
 		const result = <i className={hostTheme}/>;
 
@@ -261,10 +260,7 @@ describe('createThemeFor', () => {
 const root = document.createElement('div');
 
 function render(fragment: JSX.Element) {
-	ReactDOM.render(
-		fragment,
-		root,
-	);
+	ReactDOM.render(fragment, root,);
 	return root.innerHTML;
 }
 

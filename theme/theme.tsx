@@ -1,16 +1,11 @@
-import * as React from 'react';
-
 import {
 	ThemeRules,
 	ThemeSpec,
 	Theme,
-	ThemeProviderValue,
-	ThemeProviderProps,
 	ThemeRegistry,
 	LikeComponent,
 	ThemeOverride,
 	GetComponentTheme,
-	ThemeScopeEnv,
 } from './theme.types';
 
 import {
@@ -21,7 +16,11 @@ import {
 } from './theme.convert';
 
 import { ThemeStyle } from './theme.style';
+
 import { Last, Cast } from '../core.types';
+
+import { EnvContextEntry } from '../env/env.types';
+import { createEnvContextProvider, getEnvContext, getActiveEnvScope } from '../env/env';
 
 
 export function createThemeFor<
@@ -86,13 +85,12 @@ export function createThemeFor<
 	};
 }
 
-const ThemeContext = React.createContext<ThemeProviderValue>(null as any);
 const nullTheme = createThemeFor(null as any)({
 	host: {},
 	elements: {},
 });
 
-let activeThemeScopeEnv: ThemeScopeEnv = null;
+export const ThemeProvider = createEnvContextProvider('theme');
 
 export function getTheme<
 	TS extends ThemeSpec,
@@ -106,20 +104,20 @@ export function getTheme<
 	if (theme == null) {
 		theme = nullTheme as T;
 
-		let ctx = React.useContext(ThemeContext);
+		let ctx = getEnvContext();
 
-		while (ctx) {
+		while (ctx && ctx.theme) {
 			const {
 				map,
 				overrides,
-			} = ctx.value;
+			} = ctx.theme;
 
 			if (
 				overrides !== null
-				&& activeThemeScopeEnv !== null
+				&& getActiveEnvScope() !== null
 				&& overrides.has(Target)
 			) {
-				const overTheme = getThemeOverride(overrides.get(Target), ctx);
+				const overTheme = getThemeOverride(overrides.get(Target)!, ctx);
 				if (overTheme !== null) {
 					theme = overTheme as T;
 					break;
@@ -138,14 +136,14 @@ export function getTheme<
 	return theme;
 }
 
-function getThemeOverride({theme, xpath}: ThemeOverride, ctx: ThemeProviderValue): Theme<any> | null {
-	let scope = activeThemeScopeEnv;
+function getThemeOverride({theme, xpath}: ThemeOverride, ctx: EnvContextEntry): Theme<any> | null {
+	let scope = getActiveEnvScope();
 
 	for (let i = 0, n = xpath.length; i < n; i++) {
 		const Node = xpath[i];
 
 		while (true) {
-			scope = scope.parent;
+			scope = scope!.parent;
 			if (scope === null || scope.ctx === ctx) return null;
 			if (scope.Owner === Node) break;
 		}
@@ -154,39 +152,6 @@ function getThemeOverride({theme, xpath}: ThemeOverride, ctx: ThemeProviderValue
 	// console.log('finded:', scope.Owner && scope.Owner.name);
 
 	return theme;
-}
-
-function EndThemeScopeEnvAnchohr() {
-	// console.log('End:', activeThemeScopeEnv.Owner && activeThemeScopeEnv.Owner.name);
-	activeThemeScopeEnv = activeThemeScopeEnv.parent;
-	return null;
-};
-
-export function withThemeScopeEnv<R>(
-	Owner: LikeComponent<any>,
-	executer: () => R,
-	ctx?: ThemeProviderValue,
-): R {
-	const overrideThemeEnabled = (ctx || activeThemeScopeEnv) != null;
-
-	if (overrideThemeEnabled) {
-		const themeScopeEnv: ThemeScopeEnv = {
-			parent: activeThemeScopeEnv,
-			ctx: ctx || null,
-			Owner,
-		};
-
-		activeThemeScopeEnv = themeScopeEnv;
-	}
-
-	const fragment = executer();
-
-	if (overrideThemeEnabled) {
-		// console.log('Start:', Target && Target.name);
-		return <>{fragment}<EndThemeScopeEnvAnchohr/></> as any;
-	}
-
-	return fragment;
 }
 
 export function createThemeRegistry(
@@ -220,15 +185,4 @@ export function createThemeOverrideFor<
 		theme,
 		xpath,
 	});
-}
-
-export function ThemeProvider(props: ThemeProviderProps) {
-	const next = {
-		parent: React.useContext(ThemeContext),
-		value: props.value,
-	};
-
-	return withThemeScopeEnv(null, () => {
-		return <ThemeContext.Provider value={next}>{props.children}</ThemeContext.Provider>;
-	}, next);
 }

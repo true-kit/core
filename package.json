@@ -1,16 +1,24 @@
 {
   "name": "@truekit/core",
   "version": "0.1.0",
-  "description": "Theme in JS based on @artifact-project/css.",
-  "main": "index.ts",
+  "description": "The CORE of TrueKit™",
+  "main": "index.js",
   "scripts": {
     "test": "jest --coverage"
   },
   "keywords": [
     "css",
     "js",
+    "truekit",
+    "core",
     "theme",
     "react"
+  ],
+  "files": [
+    "*.js",
+    "*.d.ts",
+    "./theme/*.js",
+    "./theme/*.d.ts"
   ],
   "author": "RubaXa <trash@rubaxa.org>",
   "license": "MIT",

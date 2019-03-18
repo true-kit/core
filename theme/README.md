@@ -1,5 +1,5 @@
-@truekit/core/theme
--------------------
+@truekit/core: theme
+--------------------
 Theme in JS based on [@artifact-project/css](https://github.com/artifact-project/css)
 
 ```sh

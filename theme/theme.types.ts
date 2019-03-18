@@ -182,8 +182,8 @@ export type ThemeElementsRules<E extends ThemeElementsSpec> = {
 }
 
 export type ThemeRegistry = {
-	map: Map<LikeComponent<any>, Theme<any>>;
-	overrides: ThemeOverrideIndex;
+	map: Map<LikeComponent<any>, Theme<any>> | null;
+	overrides: ThemeOverrideIndex | null;
 }
 
 export type ThemeOverride = {
@@ -192,19 +192,3 @@ export type ThemeOverride = {
 }
 
 export type ThemeOverrideIndex = Map<LikeComponent<any>, ThemeOverride>;
-
-export type ThemeProviderValue = {
-	parent?: ThemeProviderValue;
-	value: ThemeRegistry;
-}
-
-export type ThemeProviderProps = {
-	value: ThemeRegistry;
-	children: React.ReactNode | React.ReactNode[];
-}
-
-export type ThemeScopeEnv = null | {
-	parent: ThemeScopeEnv;
-	Owner: LikeComponent<any>;
-	ctx?: ThemeProviderValue;
-}
