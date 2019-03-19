@@ -9,6 +9,9 @@ exports[`overrides createThemeOverrideFor 1`] = `
 	<div class=\\"_0\\">
 		blue: <i class=\\"_3\\"></i>
 	</div>
+	<div class=\\"_0\\">
+		purple: <i class=\\"_4\\"></i>
+	</div>
 </div>
 black: <i class=\\"_1\\"></i>
 black: <i class=\\"_1\\"></i>"

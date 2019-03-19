@@ -1,7 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`deps: context 1`] = `
+"<button><strong class=\\"context\\"></strong></button>
+<button><em class=\\"context\\"></em></button>"
+`;
+
+exports[`deps: defaults 1`] = `"<button><i class=\\"ok\\"></i></button>"`;
+
 exports[`deps: inline 1`] = `"<button><em class=\\"inline\\"></em></button>"`;
-
-exports[`deps: with inline 1`] = `"<button><em class=\\"inline\\"></em></button>"`;
-
-exports[`deps: without context & inline 1`] = `"<button><i class=\\"ok\\"></i></button>"`;

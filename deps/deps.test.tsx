@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Deps } from './deps.types';
-import { getDeps } from './deps';
+import { getDeps, DepsProvider, createDepsFor, createDepsRegistry } from './deps';
 
 type IconProps = {
 	name: string;
@@ -13,6 +13,10 @@ function BaseIcon(props: IconProps) {
 
 function EmIcon(props: IconProps) {
 	return <em className={props.name}/>
+}
+
+function StrongIcon(props: IconProps) {
+	return <strong className={props.name}/>
 }
 
 type ButtonProps = {
@@ -43,7 +47,7 @@ function render(fragment: JSX.Element) {
 	return root.innerHTML;
 }
 
-it('deps: without context & inline', () => {
+it('deps: defaults', () => {
 	expect(render(<IconButton iconName="ok" />)).toMatchSnapshot();
 });
 
@@ -51,6 +55,17 @@ it('deps: inline', () => {
 	expect(render(<IconButton iconName="inline" deps={{Icon: EmIcon}} />)).toMatchSnapshot();
 });
 
-it('deps: with inline', () => {
-	expect(render(<IconButton iconName="inline" deps={{Icon: EmIcon}} />)).toMatchSnapshot();
+it('deps: context', () => {
+	const emDeps = createDepsFor(IconButton)({Icon: EmIcon});
+	const strongDeps = createDepsFor(IconButton)({Icon: StrongIcon});
+
+	expect(render(
+		<DepsProvider value={createDepsRegistry([emDeps])}>
+			<DepsProvider value={createDepsRegistry([strongDeps])}>
+				<IconButton iconName="context" />{'\n'}
+			</DepsProvider>
+
+			<IconButton iconName="context" />
+		</DepsProvider>
+	)).toMatchSnapshot();
 });

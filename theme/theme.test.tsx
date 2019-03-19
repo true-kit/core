@@ -341,9 +341,18 @@ describe('overrides', () => {
 			host: {color: 'blue'},
 			elements: {},
 		});
-		const rootTheme = createThemeRegistry([textTheme, iconTheme], []);
-		const redTheme = createThemeRegistry(null, [createThemeOverrideFor(Text, Icon)(redIconTheme)]);
-		const blueTheme = createThemeRegistry(null, [createThemeOverrideFor(Text, Icon)(blueIconTheme)]);
+		const purpleIconTheme = createThemeFor(Icon)({
+			host: {color: 'purple'},
+			elements: {},
+		});
+		const rootTheme = createThemeRegistry([textTheme, iconTheme]);
+		const redTheme = createThemeRegistry(null, [
+			createThemeOverrideFor(Text, Text, Icon)(purpleIconTheme),
+			createThemeOverrideFor(Text, Icon)(redIconTheme),
+		]);
+		const blueTheme = createThemeRegistry(null, [
+			createThemeOverrideFor(Text, Icon)(blueIconTheme),
+		]);
 		const icon = <Icon size="small"/>;
 
 		expect(render(
@@ -358,8 +367,11 @@ describe('overrides', () => {
 							{'\t'}red: {icon}{'\n'}
 							{'\t'}<Text>{'\n'}
 								{'\t\t'}blue: {icon}{'\n'}
-							{'\t'}</Text>
-						</ThemeProvider>{'\n'}
+							{'\t'}</Text>{'\n'}
+						</ThemeProvider>
+						{'\t'}<Text>{'\n'}
+							{'\t\t'}purple: {icon}{'\n'}
+						{'\t'}</Text>{'\n'}
 					</Text>{'\n'}
 
 					black: <Icon size="small"/>{'\n'}

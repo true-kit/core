@@ -187,8 +187,8 @@ export type ThemeRegistry = {
 }
 
 export type ThemeOverride = {
-	theme: Theme<any>;
+	value: Theme<any>;
 	xpath: LikeComponent<any>[];
 }
 
-export type ThemeOverrideIndex = Map<LikeComponent<any>, ThemeOverride>;
+export type ThemeOverrideIndex = Map<LikeComponent<any>, ThemeOverride[]>;

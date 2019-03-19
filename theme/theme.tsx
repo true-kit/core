@@ -6,6 +6,7 @@ import {
 	LikeComponent,
 	ThemeOverride,
 	GetComponentTheme,
+	ThemeOverrideIndex,
 } from './theme.types';
 
 import {
@@ -136,22 +137,34 @@ export function getTheme<
 	return theme;
 }
 
-function getThemeOverride({theme, xpath}: ThemeOverride, ctx: EnvContextEntry): Theme<any> | null {
-	let scope = getActiveEnvScope();
+function getThemeOverride(list: ThemeOverride[], ctx: EnvContextEntry): Theme<any> | null {
+	for (let i = 0; i < list.length; i++) {
+		let {value: theme, xpath} = list[i];
+		let scope = getActiveEnvScope();
 
-	for (let i = 0, n = xpath.length; i < n; i++) {
-		const Node = xpath[i];
+		XPATH: for (let x = 0, xn = xpath.length; x < xn; x++) {
+			const Node = xpath[x];
 
-		while (true) {
-			scope = scope!.parent;
-			if (scope === null || scope.ctx === ctx) return null;
-			if (scope.Owner === Node) break;
+			while (true) {
+				scope = scope!.parent;
+
+				if (scope === null || scope.ctx === ctx) {
+					theme = null as any;
+					break XPATH;
+				}
+
+				if (scope.Owner === Node) {
+					break;
+				}
+			}
+		}
+
+		if (theme !== null) {
+			return theme;
 		}
 	}
 
-	// console.log('finded:', scope.Owner && scope.Owner.name);
-
-	return theme;
+	return null;
 }
 
 export function createThemeRegistry(
@@ -166,14 +179,19 @@ export function createThemeRegistry(
 
 		overrides: !overrides ? null : overrides.reduce((index, override) => {
 			const xpath = override.xpath.slice();
+			const Node = xpath.pop();
 
-			index.set(xpath.pop(), {
-				theme: override.theme,
-				xpath,
-			});
+			if (xpath.length >= 1 && Node) {
+				index.set(Node, (index.get(Node) || []).concat({
+					value: override.value,
+					xpath,
+				}));
+			} else {
+				console.warn('[@truekit/core: theme] Invalid override: ', override);
+			}
 
 			return index;
-		}, new Map),
+		}, new Map as ThemeOverrideIndex),
 	};
 }
 
@@ -182,7 +200,7 @@ export function createThemeOverrideFor<
 	T extends GetComponentTheme<Last<X>>,
 >(...xpath: X): (theme: Cast<T, Theme<any>>) => ThemeOverride {
 	return (theme): ThemeOverride => ({
-		theme,
+		value: theme,
 		xpath,
 	});
 }

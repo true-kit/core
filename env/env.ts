@@ -30,14 +30,6 @@ export const EnvContext = createContext<EnvContextEntry>({
 	theme: null,
 });
 
-export function createEnvContextEntry(ctx: Partial<EnvContextProps>): EnvContextEntry {
-	return {
-		parent: useContext(EnvContext),
-		deps: ctx.deps || null,
-		theme: ctx.theme || null,
-	};
-}
-
 export function withEnvScope<R>(
 	Owner: Function | null,
 	ctx: EnvContextProps | null,
@@ -77,9 +69,12 @@ export function getEnvContext(): EnvContextEntry | null {
 
 export function createEnvContextProvider<K extends keyof EnvContextProps>(key: K) {
 	function Provider(props: EnvContextProviderProps<K>) {
-		const next = createEnvContextEntry({
-			[key]: props.value,
-		});
+		const next: EnvContextEntry = {
+			parent: useContext(EnvContext),
+			deps: null,
+			theme: null,
+		};
+		next[key] = props.value;
 
 		return withEnvScope(null, next, () => {
 			return createElement(EnvContext.Provider, {value: next}, props.children);
