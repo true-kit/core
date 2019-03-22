@@ -5,11 +5,13 @@ import {
 	IsOptional,
 	FlattenDescriptorWithMetaMap,
 	Cast,
+	DescriptorWithMeta,
+	Descriptor,
 } from '../core.types';
 
 export type LikeComponent<P extends object> = (props: P) => JSX.Element;
 
-export type Deps<T extends DepsDescriptor<any, any>> = DepsExport<T['value']>
+export type Deps<T extends DepsDescriptor<any, any>> = DepsExport<T['map']>
 
 export type DepsProps<T extends DescriptorWithMetaMap> = {
 	[K in keyof T]?: LikeComponent<NonNullable<T[K]>['meta']>;
@@ -29,9 +31,14 @@ export type DepsInjection<T extends DescriptorWithMetaMap> =
 	ToLikeComponents<FlattenDescriptorWithMetaMap<T, 'deps'>>;
 
 export type DepsDescriptor<
-	T extends DescriptorWithMetaMap,
-	P extends {deps?: DepsProps<T>},
+	D extends DescriptorWithMeta<any, any>,
+	M extends DescriptorWithMetaMap,
 > = {
-	value: T;
-	use: (props: P) => DepsExport<T>;
+	map: M;
+	descriptor: D,
+	use: (props: D['meta']) => DepsExport<M>;
+}
+
+export type DepsRegistry = {
+	map: null | Map<string, Map<string, LikeComponent<any>>>;
 };

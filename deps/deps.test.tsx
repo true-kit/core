@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Deps } from './deps.types';
-import { createDepsDescriptorFor, createDepsInjectionFor, createDepsInjectionForAll } from './deps';
+import { createDepsDescriptorFor, createDepsInjectionFor, createDepsInjectionForAll, createDepsRegistry, DepsProvider } from './deps';
 import { createDescriptor } from '../core';
 
 const $icon = createDescriptor('@truekit/core/deps: icon').withMeta<IconProps>();
@@ -79,17 +79,17 @@ it('deps: inline', () => {
 	expect(render(<IconButton iconName="inline" deps={{Icon: EmIcon}} />)).toMatchSnapshot();
 });
 
-xit('deps: context', () => {
+it('deps: context', () => {
 	const emDeps = createDepsInjectionFor($buttonDeps, {[$icon.id]: EmIcon});
 	const strongDeps = createDepsInjectionForAll($buttonDeps, {[$icon.id]: StrongIcon});
 
-	// expect(render(
-	// 	<DepsProvider value={createDepsRegistry([emDeps])}>
-	// 		<DepsProvider value={createDepsRegistry([strongDeps])}>
-	// 			<IconButton iconName="context" />{'\n'}
-	// 		</DepsProvider>
+	expect(render(
+		<DepsProvider value={createDepsRegistry([emDeps])}>
+			<DepsProvider value={createDepsRegistry([strongDeps])}>
+				<IconButton iconName="ctx: strong" />{'\n'}
+			</DepsProvider>
 
-	// 		<IconButton iconName="context" />
-	// 	</DepsProvider>
-	// )).toMatchSnapshot();
+			<IconButton iconName="ctx: em" />
+		</DepsProvider>
+	)).toMatchSnapshot();
 });
