@@ -15,8 +15,9 @@ export function createDescriptor<N extends string>(name: N): DescriptorWith<N> {
 	const descriptor: Descriptor<N> = {
 		id: name,
 		name,
+		isOptional: false,
 		optional() {
-			return this;
+			return Object.create(this, {isOptional: {value: true}});
 		},
 	};
 

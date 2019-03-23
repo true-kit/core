@@ -54,14 +54,20 @@ function IconButton(props: ButtonProps) {
 	return <button><Icon name={props.iconName}/></button>;
 }
 
+function Input(props: InputProps) {
+	return <input type={props.type}/>
+}
+
 function Form(props: FormProps) {
 	const deps = $formDeps.use(props)
 	const {Icon = BaseIcon, Button, Input} = deps;
-	return <form action={props.action}>
-		<Input type="text"/>
-		<Icon name="ok"/>
-		<Button iconName="send"/>
-	</form>;
+	return <>
+		<form action={props.action}>{'\n'}
+			{'\t'}<Input type="text"/>{'\n'}
+			{'\t'}<Icon name="ok"/>{'\n'}
+			{'\t'}<Button iconName="DONE"/>{'\n'}
+		</form>{'\n'}
+	</>;
 }
 
 const root = document.createElement('div');
@@ -80,16 +86,56 @@ it('deps: inline', () => {
 });
 
 it('deps: context', () => {
-	const emDeps = createDepsInjectionFor($buttonDeps, {[$icon.id]: EmIcon});
-	const strongDeps = createDepsInjectionForAll($buttonDeps, {[$icon.id]: StrongIcon});
+	const emptyInj = createDepsInjectionFor($buttonDeps, {});
+	const emInj = createDepsInjectionFor($buttonDeps, {[$icon.id]: EmIcon});
+	const strongInj = createDepsInjectionForAll($buttonDeps, {[$icon.id]: StrongIcon});
 
 	expect(render(
-		<DepsProvider value={createDepsRegistry([emDeps])}>
-			<DepsProvider value={createDepsRegistry([strongDeps])}>
+		<DepsProvider value={createDepsRegistry([emInj])}>
+			<DepsProvider value={createDepsRegistry([strongInj])}>
 				<IconButton iconName="ctx: strong" />{'\n'}
 			</DepsProvider>
 
-			<IconButton iconName="ctx: em" />
+			<DepsProvider value={createDepsRegistry([emptyInj])}>
+				<IconButton iconName="ctx: em1" />{'\n'}
+			</DepsProvider>
+
+			<IconButton iconName="ctx: em2" />
+		</DepsProvider>
+	)).toMatchSnapshot();
+});
+
+it('deps: fail', () => {
+	expect(render(<Form action="/send"/>)).toMatchSnapshot();
+});
+
+it('deps: form', () => {
+	const formInj = createDepsInjectionForAll($formDeps, {
+		[$button.id]: IconButton,
+		[$input.id]: Input,
+		[$icon.id]: StrongIcon,
+	});
+
+	expect(render(
+		<DepsProvider value={createDepsRegistry([formInj])}>
+			<IconButton iconName="default" />{'\n'}
+			<Form action="/send"/>
+		</DepsProvider>
+	)).toMatchSnapshot();
+});
+
+it('deps: btn + form', () => {
+	const emBtnInj = createDepsInjectionFor($buttonDeps, {[$icon.id]: EmIcon});
+	const formInj = createDepsInjectionForAll($formDeps, {
+		[$button.id]: IconButton,
+		[$input.id]: Input,
+		[$icon.id]: StrongIcon,
+	});
+
+	expect(render(
+		<DepsProvider value={createDepsRegistry([emBtnInj, formInj])}>
+			<IconButton iconName="EM" />{'\n'}
+			<Form action="/send"/>
 		</DepsProvider>
 	)).toMatchSnapshot();
 });

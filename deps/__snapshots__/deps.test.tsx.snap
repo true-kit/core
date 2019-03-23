@@ -1,10 +1,43 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`deps: btn + form 1`] = `
+"<button><em class=\\"EM\\"></em></button>
+<form action=\\"/send\\">
+	<input type=\\"text\\">
+	<strong class=\\"ok\\"></strong>
+	<button><strong class=\\"DONE\\"></strong></button>
+</form>
+"
+`;
+
 exports[`deps: context 1`] = `
 "<button><strong class=\\"context\\"></strong></button>
 <button><em class=\\"context\\"></em></button>"
 `;
 
 exports[`deps: defaults 1`] = `"<button><i class=\\"ok\\"></i></button>"`;
+
+exports[`deps: fail 1`] = `
+"<form action=\\"/send\\">
+	<i>
+		Dep '@truekit/core/deps: input' (aka 'Input') not found
+	</i>
+	<i class=\\"ok\\"></i>
+	<i>
+		Dep '@truekit/core/deps: button' (aka 'Button') not found
+	</i>
+</form>
+"
+`;
+
+exports[`deps: form 1`] = `
+"<button><i class=\\"default\\"></i></button>
+<form action=\\"/send\\">
+	<input type=\\"text\\">
+	<strong class=\\"ok\\"></strong>
+	<button><strong class=\\"DONE\\"></strong></button>
+</form>
+"
+`;
 
 exports[`deps: inline 1`] = `"<button><em class=\\"inline\\"></em></button>"`;

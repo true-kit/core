@@ -51,6 +51,7 @@ export type Cast<X, Y> = X extends Y ? X : Y;
 export interface Descriptor<N extends string> {
 	readonly id: N;
 	readonly name: N;
+	readonly isOptional: boolean;
 	optional(): this | undefined;
 }
 

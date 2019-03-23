@@ -13,9 +13,26 @@ import {
 import {
 	DescriptorWithMeta,
 	DescriptorWithMetaMap,
+	Descriptor,
 } from '../core.types';
+import { createElement } from 'react';
 
 export const DepsProvider = createEnvContextProvider('deps');
+
+let activeDepsScope = null as (null | any);
+
+function scopeWrap(fn: any, injection: Map<string, any>): any {
+	return function () {
+		let prevScope = activeDepsScope;
+		activeDepsScope = injection;
+
+		const ret = fn.apply(this, arguments);
+
+		activeDepsScope = prevScope;
+
+		return ret;
+	};
+}
 
 export function createDepsDescriptorFor<
 	D extends DescriptorWithMeta<any, any>,
@@ -52,18 +69,35 @@ export function createDepsDescriptorFor<
 						while (i--) {
 							const [key, descr] = mapEntries[i];
 
-							if (!result.hasOwnProperty(key) && injection.has(descr!.id)) {
-								result[key] = injection.get(descr!.id);
+							if (result.hasOwnProperty(key)) {
+								continue;
+							}
 
-								if (--resolved == 0) {
-									break MAIN;
-								}
+							if (activeDepsScope && activeDepsScope.has(descr!.id)) {
+								result[key] = activeDepsScope.get(descr!.id);
+							} else if (injection.has(descr!.id)) {
+								result[key] = scopeWrap(injection.get(descr!.id), injection);
+							}
+
+							if (--resolved == 0) {
+								break MAIN;
 							}
 						}
 					}
 				}
 
 				ctx = ctx.parent;
+			}
+
+			if (resolved > 0) {
+				let i = mapEntriesLen;
+
+				while (i--) {
+					const [key, descr] = mapEntries[i];
+					if (!result.hasOwnProperty(key) && !descr!.isOptional) {
+						result[key] = createNullDep(descriptor, key, descr!);
+					}
+				}
 			}
 
 			return result as any;
@@ -108,4 +142,10 @@ export function createDepsRegistry(
 
 function hasDepsProp(props: object): props is Deps<any> {
 	return props.hasOwnProperty('deps');
+}
+
+function createNullDep(descr: Descriptor<any>, alias: string, depDescr: Descriptor<any>) {
+	return () => createElement('i', {}, `
+		Dep '${depDescr.name}' (aka '${alias}') not found
+	`);
 }
