@@ -3,11 +3,14 @@ import {
 	DepsDescriptor,
 	DepsInjection,
 	DepsRegistry,
+	LikeComponent,
 } from './deps.types';
 
 import {
 	getEnvContext,
 	createEnvContextProvider,
+	withEnvScope,
+	getActiveEnvScope,
 } from '../env/env';
 
 import {
@@ -16,23 +19,9 @@ import {
 	Descriptor,
 } from '../core.types';
 import { createElement } from 'react';
+import { EnvContextProps } from '../env/env.types';
 
 export const DepsProvider = createEnvContextProvider('deps');
-
-let activeDepsScope = null as (null | any);
-
-function scopeWrap(fn: any, injection: Map<string, any>): any {
-	return function () {
-		let prevScope = activeDepsScope;
-		activeDepsScope = injection;
-
-		const ret = fn.apply(this, arguments);
-
-		activeDepsScope = prevScope;
-
-		return ret;
-	};
-}
 
 export function createDepsDescriptorFor<
 	D extends DescriptorWithMeta<any, any>,
@@ -51,36 +40,41 @@ export function createDepsDescriptorFor<
 			}
 
 			const result = {};
-			let resolved = mapEntriesLen;
+			let resolved = mapEntriesLen; // количество зависимостей, которые нужно зарезолвить
 			let ctx = getEnvContext();
 
 			MAIN: while (ctx) {
 				const deps = ctx.deps;
+				let envScope = getActiveEnvScope();
+				let i = mapEntriesLen;
 
-				if (deps) {
-					const {
-						map:depsFor,
-					} = deps;
+				if (deps && i > 0) {
+					const {map:depsFor} = deps;
+
+					while (envScope) {
+						const injection = envScope.ctx && envScope.ctx.depsInjection;
+
+						if (injection) {
+							while (i--) {
+								if (resolveDeps(result, mapEntries[i], injection)) {
+									if (--resolved == 0) {
+										break MAIN;
+									}
+								}
+							}
+						}
+
+						envScope = envScope.parent;
+					}
 
 					if (depsFor && depsFor.has(descriptor.id)) {
 						const injection = depsFor.get(descriptor.id)!;
-						let i = mapEntriesLen;
 
 						while (i--) {
-							const [key, descr] = mapEntries[i];
-
-							if (result.hasOwnProperty(key)) {
-								continue;
-							}
-
-							if (activeDepsScope && activeDepsScope.has(descr!.id)) {
-								result[key] = activeDepsScope.get(descr!.id);
-							} else if (injection.has(descr!.id)) {
-								result[key] = scopeWrap(injection.get(descr!.id), injection);
-							}
-
-							if (--resolved == 0) {
-								break MAIN;
+							if (resolveDeps(result, mapEntries[i], injection, true)) {
+								if (--resolved == 0) {
+									break MAIN;
+								}
 							}
 						}
 					}
@@ -89,6 +83,8 @@ export function createDepsDescriptorFor<
 				ctx = ctx.parent;
 			}
 
+			// Резолвим зависимости, которые не нашли на пустышки,
+			// чтобы избежать ошибок при рендере, ну и сообщить об этом разработчику
 			if (resolved > 0) {
 				let i = mapEntriesLen;
 
@@ -145,7 +141,42 @@ function hasDepsProp(props: object): props is Deps<any> {
 }
 
 function createNullDep(descr: Descriptor<any>, alias: string, depDescr: Descriptor<any>) {
+	// @todo: Логгер
 	return () => createElement('i', {}, `
 		Dep '${depDescr.name}' (aka '${alias}') not found
 	`);
+}
+
+function addEnvScope(target: Function, depsInjection: Map<string, LikeComponent<any>>) {
+	return (...args: any[]) => {
+		const entry: EnvContextProps = {
+			deps: null,
+			theme: null,
+			depsInjection,
+		};
+		return withEnvScope(null, entry, () => target(...args));
+	};
+}
+
+function resolveDeps(
+	result: object,
+	entry: [string, Descriptor<any> | undefined],
+	injection: Map<string, LikeComponent<any>>,
+	useEnvScope?: boolean,
+) {
+	const [key, descr] = entry!;
+
+	if (result.hasOwnProperty(key)) {
+		return false;
+	}
+
+	if (injection.has(descr!.id)) {
+		result[key] = injection.get(descr!.id);
+
+		if (useEnvScope) {
+			result[key] = addEnvScope(result[key], injection);
+		}
+
+		return true;
+	}
 }

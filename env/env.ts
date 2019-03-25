@@ -27,6 +27,7 @@ let envScopeEndAnchor = () => {
 export const EnvContext = createContext<EnvContextEntry>({
 	parent: null,
 	deps: null,
+	depsInjection: null,
 	theme: null,
 });
 
@@ -72,6 +73,7 @@ export function createEnvContextProvider<K extends keyof EnvContextProps>(key: K
 		const next: EnvContextEntry = {
 			parent: useContext(EnvContext),
 			deps: null,
+			depsInjection: null,
 			theme: null,
 		};
 		next[key] = props.value;

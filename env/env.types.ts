@@ -1,8 +1,9 @@
-import { DepsRegistry } from '../deps/deps.types';
+import { DepsRegistry, LikeComponent } from '../deps/deps.types';
 import { ThemeRegistry } from '../theme/theme.types';
 
 export type EnvContextProps = {
 	deps: DepsRegistry | null;
+	depsInjection: Map<string, LikeComponent<any>> | null;
 	theme: ThemeRegistry | null;
 }
 

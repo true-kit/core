@@ -11,8 +11,9 @@ exports[`deps: btn + form 1`] = `
 `;
 
 exports[`deps: context 1`] = `
-"<button><strong class=\\"context\\"></strong></button>
-<button><em class=\\"context\\"></em></button>"
+"<button><strong class=\\"ctx: strong\\"></strong></button>
+<button><em class=\\"ctx: em1\\"></em></button>
+<button><em class=\\"ctx: em2\\"></em></button>"
 `;
 
 exports[`deps: defaults 1`] = `"<button><i class=\\"ok\\"></i></button>"`;

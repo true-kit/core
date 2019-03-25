@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom';
 import { Deps } from './deps.types';
 import { createDepsDescriptorFor, createDepsInjectionFor, createDepsInjectionForAll, createDepsRegistry, DepsProvider } from './deps';
 import { createDescriptor } from '../core';
+import { withEnvScope } from '../env/env';
 
 const $icon = createDescriptor('@truekit/core/deps: icon').withMeta<IconProps>();
 const $button = createDescriptor('@truekit/core/deps: button').withMeta<ButtonProps>();
@@ -38,36 +39,41 @@ type FormProps = {
 }
 
 function BaseIcon(props: IconProps) {
-	return <i className={props.name}/>
+	return withEnvScope(BaseIcon, null, () => <i className={props.name}/>);
 }
 
 function EmIcon(props: IconProps) {
-	return <em className={props.name}/>
+	return withEnvScope(EmIcon, null, () => <em className={props.name}/>);
 }
 
 function StrongIcon(props: IconProps) {
-	return <strong className={props.name}/>
+	return withEnvScope(StrongIcon, null, () => <strong className={props.name}/>);
 }
 
 function IconButton(props: ButtonProps) {
-	const {Icon = BaseIcon} = $buttonDeps.use(props);
-	return <button><Icon name={props.iconName}/></button>;
+	return withEnvScope(IconButton, null, () => {
+		const {Icon = BaseIcon} = $buttonDeps.use(props);
+		return <button><Icon name={props.iconName}/></button>;
+	});
 }
 
 function Input(props: InputProps) {
-	return <input type={props.type}/>
+	return withEnvScope(Input, null, () => <input type={props.type}/>);
 }
 
 function Form(props: FormProps) {
-	const deps = $formDeps.use(props)
-	const {Icon = BaseIcon, Button, Input} = deps;
-	return <>
-		<form action={props.action}>{'\n'}
-			{'\t'}<Input type="text"/>{'\n'}
-			{'\t'}<Icon name="ok"/>{'\n'}
-			{'\t'}<Button iconName="DONE"/>{'\n'}
-		</form>{'\n'}
-	</>;
+	return withEnvScope(Form, null, () => {
+		const deps = $formDeps.use(props)
+		const {Icon = BaseIcon, Button, Input} = deps;
+
+		return <>
+			<form action={props.action}>{'\n'}
+				{'\t'}<Input type="text"/>{'\n'}
+				{'\t'}<Icon name="ok"/>{'\n'}
+				{'\t'}<Button iconName="DONE"/>{'\n'}
+			</form>{'\n'}
+		</>;
+	});
 }
 
 const root = document.createElement('div');

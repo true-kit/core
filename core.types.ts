@@ -9,6 +9,7 @@ export type UnionToIntersection<U> =
 
 export type ArrayInfer<T> = T extends (infer U)[] ? U : never;
 export type FunctionInfer<F> = F extends (...args: infer A) => infer R ? [A, R] : never;
+export type FirstArgInfer<F> = F extends (first: infer F) => any ? F : never;
 
 export type Optional<T> = T | undefined;
 export type IsOptional<T> = UnionToIntersection<T> extends undefined ? true : false;
