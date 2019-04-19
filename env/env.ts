@@ -32,7 +32,7 @@ export const EnvContext = createContext<EnvContextEntry>({
 });
 
 export function withEnvScope<R>(
-	Owner: Function | null,
+	owner: any | null,
 	ctx: EnvContextProps | null,
 	executer: () => R,
 ): R {
@@ -41,7 +41,7 @@ export function withEnvScope<R>(
 	if (overrideEnabled) {
 		const envScope: EnvScope = {
 			parent: activeEnvScope,
-			Owner,
+			owner,
 			ctx,
 		};
 

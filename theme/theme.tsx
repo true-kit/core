@@ -5,8 +5,9 @@ import {
 	ThemeRegistry,
 	LikeComponent,
 	ThemeOverride,
-	GetComponentTheme,
+	GetThemeFromDescriptor,
 	ThemeOverrideIndex,
+	AllThemes,
 } from './theme.types';
 
 import {
@@ -18,75 +19,78 @@ import {
 
 import { ThemeStyle } from './theme.style';
 
-import { Last, Cast } from '../core.types';
-
+import { DescriptorWithMeta, Last, Cast } from '../core.types';
 import { EnvContextEntry } from '../env/env.types';
 import { createEnvContextProvider, getEnvContext, getActiveEnvScope } from '../env/env';
 
 
-export function createThemeFor<
-	TS extends ThemeSpec,
-	T extends Theme<TS>,
->(Target: LikeComponent<T>) {
-	return function themeFactory(rules: ThemeRules<T['spec']>): T {
-		const cssRules = convertThemeRulesToCSSRules(rules);
-		const cssClasses = convertCSSRulesToCSSClasses(cssRules);
-		const classes = convertCSSClassesToThemeClasses(cssClasses);
-		const toStringCode = [
-			`
-			var k;
-			var n = this.name;
-			var s = this.state;
-			var c = this.classes;
-			`
-		];
-
-		createToStringCode(toStringCode, 'host', classes['host']);
-		Object.entries(classes['elements']).forEach(([name, classes]) => {
-			createToStringCode(toStringCode, name, classes);
-		});
-
-		const classNames = Function(`
-			${toStringCode.join('\n')}
-			return '';
-		`);
-
-		function _for(name: string) {
-			const registry = this.registry;
-
-			if (registry === null || registry.hasOwnProperty(name)) {
-				const style = new ThemeStyle(
-					name,
-					name === 'host' ? classes[name] : classes['elements'][name],
-					classNames,
-				) as any;
-
-				if (registry === null) {
-					return style
-				}
-
-				registry[name] = style;
-			}
-
-			return registry[name];
-		}
-
-		return {
-			Owner: Target as Function,
-			for: _for,
-			cssRules,
-			classes,
-			registry: null,
-			withRegistry(registry: object) {
-				const wr = Object.create(this);
-				wr.registry = registry;
-				return wr;
-			},
-		} as T;
-	};
+export function createThemeForAll<
+	D extends DescriptorWithMeta<any, any>
+>(descriptor: D): AllThemes<D> {
+	return {} as any;
 }
 
-const nullTheme = createThemeFor(null as any)({
+export function createThemeFor<
+	D extends DescriptorWithMeta<any, {theme?: Theme<any>}>,
+	TS extends ThemeSpec = NonNullable<D['meta']['theme']>['spec'],
+>(descriptor: D, rules: ThemeRules<TS>): Theme<TS> {
+	const cssRules = convertThemeRulesToCSSRules(rules);
+	const cssClasses = convertCSSRulesToCSSClasses(cssRules);
+	const classes = convertCSSClassesToThemeClasses(cssClasses);
+	const toStringCode = [
+		`
+		var k;
+		var n = this.name;
+		var s = this.state;
+		var c = this.classes;
+		`
+	];
+
+	createToStringCode(toStringCode, 'host', classes['host']);
+	Object.entries(classes['elements']).forEach(([name, classes]) => {
+		createToStringCode(toStringCode, name, classes);
+	});
+
+	const classNames = Function(`
+		${toStringCode.join('\n')}
+		return '';
+	`);
+
+	function _for(name: string) {
+		const store = this.store;
+
+		if (store === null || store.hasOwnProperty(name)) {
+			const style = new ThemeStyle(
+				name,
+				name === 'host' ? classes[name] : classes['elements'][name],
+				classNames,
+			) as any;
+
+			if (store === null) {
+				return style
+			}
+
+			store[name] = style;
+		}
+
+		return store[name];
+	}
+
+	return {
+		descriptor: descriptor as any,
+		for: _for,
+		cssRules,
+		classes,
+		store: null,
+		persist(store: object) {
+			const wr = Object.create(this);
+			wr.store = store;
+			return wr;
+		},
+	} as Theme<TS>;
+}
+
+const nullTheme = createThemeFor(null as any, {
 	host: {},
 	elements: {},
 });
@@ -94,12 +98,9 @@ const nullTheme = createThemeFor(null as any)({
 export const ThemeProvider = createEnvContextProvider('theme');
 
 export function getTheme<
-	TS extends ThemeSpec,
-	T extends Theme<TS>,
->(
-	Target: LikeComponent<T>,
-	props: {theme?: T},
-): T {
+	D extends DescriptorWithMeta<any, {theme?: Theme<any>}>,
+	T extends Theme<any> = NonNullable<D['meta']['theme']>,
+>(descriptor: D, props: {theme?: T}): T {
 	let theme = props.theme;
 
 	if (theme == null) {
@@ -116,17 +117,17 @@ export function getTheme<
 			if (
 				overrides !== null
 				&& getActiveEnvScope() !== null
-				&& overrides.has(Target)
+				&& overrides.has(descriptor)
 			) {
-				const overTheme = getThemeOverride(overrides.get(Target)!, ctx);
+				const overTheme = getThemeOverride(overrides.get(descriptor)!, ctx);
 				if (overTheme !== null) {
 					theme = overTheme as T;
 					break;
 				}
 			}
 
-			if (map !== null && map.has(Target)) {
-				theme = map.get(Target) as T;
+			if (map !== null && map.has(descriptor)) {
+				theme = map.get(descriptor) as T;
 				break;
 			}
 
@@ -143,7 +144,7 @@ function getThemeOverride(list: ThemeOverride[], ctx: EnvContextEntry): Theme<an
 		let scope = getActiveEnvScope();
 
 		XPATH: for (let x = 0, xn = xpath.length; x < xn; x++) {
-			const Node = xpath[x];
+			const descr = xpath[x];
 
 			while (true) {
 				scope = scope!.parent;
@@ -153,7 +154,7 @@ function getThemeOverride(list: ThemeOverride[], ctx: EnvContextEntry): Theme<an
 					break XPATH;
 				}
 
-				if (scope.Owner === Node) {
+				if (scope.owner === descr) {
 					break;
 				}
 			}
@@ -173,7 +174,7 @@ export function createThemeRegistry(
 ): ThemeRegistry {
 	return {
 		map: !themes ? null : themes.reduce((map, theme) => {
-			map.set(theme.Owner, theme);
+			map.set(theme.descriptor, theme);
 			return map;
 		}, new Map),
 
@@ -196,11 +197,10 @@ export function createThemeRegistry(
 }
 
 export function createThemeOverrideFor<
-	X extends any[],
-	T extends GetComponentTheme<Last<X>>,
->(...xpath: X): (theme: Cast<T, Theme<any>>) => ThemeOverride {
+	X extends DescriptorWithMeta<any, {theme?: Theme<any>}>[]
+>(...xpath: X): (theme: GetThemeFromDescriptor<Last<X>>) => ThemeOverride {
 	return (theme): ThemeOverride => ({
-		value: theme,
+		value: theme as any,
 		xpath,
 	});
 }

@@ -66,27 +66,12 @@ export type DescriptorWithMetaMap = {
 	[key:string]: DescriptorWithMeta<any, any> | undefined;
 }
 
+export const __meta__ = Symbol('__meta__');
 
-export type FlattenDescriptorWithMetaMap<
-	T extends DescriptorWithMetaMap,
-	KEYS extends string,
-> = FlattenObject<__FlattenDescriptorWithMetaMap__<T, KEYS>>;
+export type Meta<T> = {
+	[__meta__]?: T;
+}
 
-type __FlattenDescriptorWithMetaMapIterator__<
-	T extends DescriptorWithMeta<any, any>,
-	KEYS extends string,
-> = {
-	[X in T['id']]: T['meta'];
-} | (T['meta'] extends {[X in KEYS]?: DescriptorWithMetaMap} ? {
-	[X in KEYS]: __FlattenDescriptorWithMetaMap__<
-		NonNullable<T['meta'][X]>,
-		KEYS
-	>;
-}[KEYS] : never)
-
-type __FlattenDescriptorWithMetaMap__<
-	T extends DescriptorWithMetaMap,
-	KEYS extends string,
-> = UnionToIntersection<{
-	[K in keyof T]: __FlattenDescriptorWithMetaMapIterator__<NonNullable<T[K]>, KEYS>;
-}[keyof T]>;
+export type GetMeta<T extends {[__meta__]?: any}> = {
+	[K in keyof T]-?: K extends symbol ? T[K] : never;
+}[keyof T]

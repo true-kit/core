@@ -1,5 +1,7 @@
 import {
-	Descriptor, DescriptorWith, DescriptorWithMetaMap,
+	Descriptor,
+	DescriptorWith,
+	DescriptorWithMetaMap,
 } from './core.types';
 
 const reservedDescriptors = {} as {

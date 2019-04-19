@@ -1,7 +1,14 @@
 import { IRuleDefinitions } from '@artifact-project/css';
+import {
+	FlattenObject,
+	UnionToIntersection,
+	DescriptorWithMeta,
+	GetMeta,
+} from '../core.types';
+import { Deps } from '../deps';
 
 export type LikeComponent<T extends Theme<any>> = (props: {theme?: T}) => any;
-export type GetComponentTheme<C> = C extends (props: {theme?: infer T}) => any ? T : never;
+export type GetThemeFromDescriptor<D> = D extends DescriptorWithMeta<any, {theme?: infer T}> ? T : never;
 
 export type ThemeModsSpec = {
 	[name:string]: string | boolean | undefined;
@@ -21,34 +28,32 @@ export type Theme<TS extends ThemeSpec> = {
 		host: Required<TS['host']>;
 		elements: Required<TS['elements']>;
 	};
-	readonly Owner: LikeComponent<Theme<TS>>;
+
+	readonly descriptor: DescriptorWithMeta<any, {theme?: Theme<TS>}>;
 	readonly cssRules: IRuleDefinitions;
-	readonly registry: object | null;
+	readonly store: object | null;
 
 	readonly classes: {
 		host: ThemeClasses<TS['host']>;
-		elements: ThemeElementsClasses<TS['elements']>
-	}
+		elements: ThemeElementsClasses<TS['elements']>;
+	};
 
 	// Get theme from `host` or element
-	for<
-		K extends keyof TS['elements'],
-		N extends 'host' | K,
-	>(name: N): N extends K
+	for<K extends keyof TS['elements'], N extends 'host' | K>(name: N): N extends K
 		? string & ThemeElement<N, TS['elements'][K]>
 		: string & ThemeElement<N, TS['host']>
 	;
 
-	withRegistry(registry: object): Theme<TS>;
+	persist(store: object): Theme<TS>;
 }
 
 export type ThemeClasses<T extends ThemeModsSpec> = {$root: string} & {
 	[K in keyof T]: string;
-};
+}
 
 export type ThemeElementsClasses<T extends ThemeElementsSpec> = {
 	[K in keyof T]?: T[K] extends ThemeModsSpec ? ThemeClasses<T[K]> : {$root: string};
-};
+}
 
 export type ThemeElement<N, T extends boolean | ThemeModsSpec> = {
 	name: N;
@@ -182,13 +187,34 @@ export type ThemeElementsRules<E extends ThemeElementsSpec> = {
 }
 
 export type ThemeRegistry = {
-	map: Map<LikeComponent<any>, Theme<any>> | null;
+	map: Map<DescriptorWithMeta<any, any>, Theme<any>> | null;
 	overrides: ThemeOverrideIndex | null;
 }
 
 export type ThemeOverride = {
 	value: Theme<any>;
-	xpath: LikeComponent<any>[];
+	xpath: DescriptorWithMeta<any, {theme?: Theme<any>}>[];
 }
 
-export type ThemeOverrideIndex = Map<LikeComponent<any>, ThemeOverride[]>;
+export type ThemeOverrideIndex = Map<DescriptorWithMeta<any, any>, ThemeOverride[]>;
+
+export type AllThemes<
+	T extends DescriptorWithMeta<any, any>
+> = FlattenObject<UnionToIntersection<__AllThemes__<T>>>
+
+type __AllThemes__<T extends DescriptorWithMeta<any, any>> = (
+	(T['meta'] extends {theme?: Theme<any>}
+		? {
+			[X in T['id']]: NonNullable<T['meta']['theme']>
+		}
+		: never
+	)
+	| { // Recursion
+		next: DepsThemes<GetMeta<NonNullable<T['meta']['deps']>>>;
+		exit: never;
+	}[T['meta'] extends {deps?: Deps<any>} ? 'next' : 'exit']
+)
+
+type DepsThemes<T extends {[k:string]: DescriptorWithMeta<any, any>}> = {
+	[K in keyof T]-?: __AllThemes__<NonNullable<T[K]>>;
+}[keyof T]

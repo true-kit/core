@@ -13,7 +13,7 @@ export type EnvContextEntry = EnvContextProps & {
 
 export type EnvScope = null | {
 	parent: EnvScope;
-	Owner: Function | null;
+	owner: any | null;
 	ctx: EnvContextProps | null;
 }
 

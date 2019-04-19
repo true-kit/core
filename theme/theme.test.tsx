@@ -4,14 +4,26 @@ import {
 	createThemeFor,
 	getTheme,
 	createThemeRegistry,
-	createThemeOverrideFor,
 	ThemeProvider,
+	createThemeForAll,
+	createThemeOverrideFor,
 } from './theme';
 import { resetCSS } from '@artifact-project/css';
 import { Theme } from './theme.types';
 import { withEnvScope } from '../env/env';
+import { createDescriptor } from '../core';
+import { createDepsDescriptorFor, Deps } from '../deps';
 // import * as classnames from 'classnames';
 // import { now } from '@perf-tools/performance';
+
+const $text = createDescriptor('@truekit/core/theme: Text').withMeta<TextProps>();
+const $icon = createDescriptor('@truekit/core/theme: Icon').withMeta<IconProps>();
+const $btn = createDescriptor('@truekit/core/theme: Btn').withMeta<BtnProps>();
+
+const $btnDeps = createDepsDescriptorFor($btn, {
+	[$text.id]: $text,
+	[$icon.id]: $icon.optional(),
+});
 
 type TextProps = {
 	children?: React.ReactNode;
@@ -27,7 +39,7 @@ type TextProps = {
 			value: boolean;
 		};
 	}>;
-};
+}
 
 type IconProps = {
 	size?: 'big' | 'small';
@@ -35,11 +47,20 @@ type IconProps = {
 		host: Pick<IconProps, 'size'>;
 		elements: {};
 	}>;
-};
+}
+
+type BtnProps = {
+	value?: string;
+	deps?: Deps<typeof $btnDeps>;
+	theme?: Theme<{
+		host: {};
+		elements: {};
+	}>;
+}
 
 function Text(props: TextProps) {
-	return withEnvScope(Text, null, () => {
-		const hostTheme = getTheme(Text, props).for('host');
+	return withEnvScope($text, null, () => {
+		const hostTheme = getTheme($text, props).for('host');
 		const result = <div className={hostTheme}>{props.children}</div>;
 
 		props.size && hostTheme.set('size', props.size);
@@ -50,8 +71,8 @@ function Text(props: TextProps) {
 }
 
 function Icon(props: IconProps) {
-	return withEnvScope(Icon, null, () => {
-		const hostTheme = getTheme(Icon, props).for('host');
+	return withEnvScope($icon, null, () => {
+		const hostTheme = getTheme($icon, props).for('host');
 		const result = <i className={hostTheme}/>;
 
 		props.size && hostTheme.set('size', props.size);
@@ -67,12 +88,12 @@ beforeEach(() => {
 
 describe('createThemeFor', () => {
 	it('host', () => {
-		const theme = createThemeFor(Text)({
+		const theme = createThemeFor($text, {
 			host: {color: '#333'},
 			elements: {},
 		});
 
-		expect(theme.Owner).toBe(Text);
+		expect(theme.descriptor).toBe($text);
 		expect(theme.cssRules).toEqual({
 			'.host': {color: '#333'},
 		});
@@ -83,8 +104,8 @@ describe('createThemeFor', () => {
 		expect(theme.for('host').toString()).toBe('_0');
 	});
 
-	it('for equal for', () => {
-		const theme = createThemeFor(Text)({
+	it('for equal for (but not persist)', () => {
+		const theme = createThemeFor($text, {
 			host: {color: '#333'},
 			elements: {},
 		});
@@ -95,11 +116,12 @@ describe('createThemeFor', () => {
 		expect(host1 + '').toBe(host2 + '');
 	});
 
-	it('withRegistry', () => {
-		const theme = createThemeFor(Text)({
+	// Создаёт тему у которой метод `for` будет вовращать костантное значение
+	it('persist', () => {
+		const theme = createThemeFor($text, {
 			host: {color: '#333'},
 			elements: {},
-		}).withRegistry({});
+		}).persist({});
 		const host1 = theme.for('host');
 		const host2 = theme.for('host');
 
@@ -108,12 +130,11 @@ describe('createThemeFor', () => {
 	});
 
 	it('host - element', () => {
-		const theme = createThemeFor(Text)({
+		const theme = createThemeFor($text, {
 			host: {color: '#333'},
 			elements: {value: {color: 'red'}},
 		});
 
-		expect(theme.Owner).toBe(Text);
 		expect(theme.cssRules).toEqual({
 			'.host': {color: '#333'},
 			'.elements--value': {color: 'red'},
@@ -126,7 +147,7 @@ describe('createThemeFor', () => {
 	});
 
 	it('host - modifiers', () => {
-		const theme = createThemeFor(Text)({
+		const theme = createThemeFor($text, {
 			host: {
 				color: '#333',
 				':modifiers': {
@@ -167,7 +188,7 @@ describe('createThemeFor', () => {
 	});
 
 	it('host + &', () => {
-		const theme = createThemeFor(Text)({
+		const theme = createThemeFor($text, {
 			host: {
 				color: '#333',
 				'+': {
@@ -207,7 +228,7 @@ describe('createThemeFor', () => {
 	});
 
 	it('host - modifiers - not', () => {
-		const theme = createThemeFor(Text)({
+		const theme = createThemeFor($text, {
 			host: {
 				color: '#333',
 				':modifiers': {
@@ -266,7 +287,7 @@ function render(fragment: JSX.Element) {
 
 describe('react', () => {
 	it('inline theme', () => {
-		const theme = createThemeFor(Text)({
+		const theme = createThemeFor($text, {
 			host: {
 				color: 'red',
 				':modifiers': {
@@ -281,7 +302,7 @@ describe('react', () => {
 		)).toMatchSnapshot();
 	});
 
-	it('without context', () => {
+	it('without (context & inline)', () => {
 		expect(render(
 			<Text>Wow!</Text>,
 		)).toMatchSnapshot();
@@ -289,7 +310,7 @@ describe('react', () => {
 
 	it('with context', () => {
 		const rootTheme = createThemeRegistry([
-			createThemeFor(Icon)({
+			createThemeFor($icon, {
 				host: {
 					display: 'inline-block',
 					':modifiers': {
@@ -301,7 +322,7 @@ describe('react', () => {
 		]);
 
 		const theme = createThemeRegistry([
-			createThemeFor(Text)({
+			createThemeFor($text, {
 				host: {
 					color: '#333',
 					':modifiers': {
@@ -325,33 +346,33 @@ describe('react', () => {
 
 describe('overrides', () => {
 	it('createThemeOverrideFor', () => {
-		const textTheme = createThemeFor(Text)({
+		const textTheme = createThemeFor($text, {
 			host: {color: '#333'},
 			elements: {},
 		});
-		const iconTheme = createThemeFor(Icon)({
+		const iconTheme = createThemeFor($icon, {
 			host: {color: 'black'},
 			elements: {},
 		});
-		const redIconTheme = createThemeFor(Icon)({
+		const redIconTheme = createThemeFor($icon, {
 			host: {color: 'red'},
 			elements: {},
 		});
-		const blueIconTheme = createThemeFor(Icon)({
+		const blueIconTheme = createThemeFor($icon, {
 			host: {color: 'blue'},
 			elements: {},
 		});
-		const purpleIconTheme = createThemeFor(Icon)({
+		const purpleIconTheme = createThemeFor($icon, {
 			host: {color: 'purple'},
 			elements: {},
 		});
 		const rootTheme = createThemeRegistry([textTheme, iconTheme]);
 		const redTheme = createThemeRegistry(null, [
-			createThemeOverrideFor(Text, Text, Icon)(purpleIconTheme),
-			createThemeOverrideFor(Text, Icon)(redIconTheme),
+			createThemeOverrideFor($text, $text, $icon)(purpleIconTheme),
+			createThemeOverrideFor($text, $icon)(redIconTheme),
 		]);
 		const blueTheme = createThemeRegistry(null, [
-			createThemeOverrideFor(Text, Icon)(blueIconTheme),
+			createThemeOverrideFor($text, $icon)(blueIconTheme),
 		]);
 		const icon = <Icon size="small"/>;
 
