@@ -24,10 +24,17 @@ import { EnvContextEntry } from '../env/env.types';
 import { createEnvContextProvider, getEnvContext, getActiveEnvScope } from '../env/env';
 
 
-export function createThemeForAll<
+export function createThemeRegistryFor<
 	D extends DescriptorWithMeta<any, any>
->(descriptor: D): AllThemes<D> {
-	return {} as any;
+>(
+	descriptor: D,
+	themesMap: AllThemes<D>,
+	overrides?: ThemeOverride[] | null,
+): ThemeRegistry {
+	return createThemeRegistry(
+		Object.values(themesMap).map(theme => theme) as Theme<any>[],
+		overrides,
+	);
 }
 
 export function createThemeFor<

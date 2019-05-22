@@ -67,7 +67,9 @@ export type ThemeElement<N, T extends boolean | ThemeModsSpec> = {
 		set(): ThemeElement<N, T>;
 		classes: {$root: string};
 	}
-);
+) & {
+	toDOMProps<T>(props?: React.AllHTMLAttributes<T>): React.AllHTMLAttributes<T>;
+};
 
 export type CSSProps = Partial<React.CSSProperties>;
 

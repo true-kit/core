@@ -39,30 +39,30 @@ type FormProps = {
 }
 
 function BaseIcon(props: IconProps) {
-	return withEnvScope(BaseIcon, null, () => <i className={props.name}/>);
+	return withEnvScope({}, null, () => <i className={props.name}/>);
 }
 
 function EmIcon(props: IconProps) {
-	return withEnvScope(EmIcon, null, () => <em className={props.name}/>);
+	return withEnvScope({}, null, () => <em className={props.name}/>);
 }
 
 function StrongIcon(props: IconProps) {
-	return withEnvScope(StrongIcon, null, () => <strong className={props.name}/>);
+	return withEnvScope({}, null, () => <strong className={props.name}/>);
 }
 
 function IconButton(props: ButtonProps) {
-	return withEnvScope(IconButton, null, () => {
+	return withEnvScope({}, null, () => {
 		const {Icon = BaseIcon} = $buttonDeps.use(props);
 		return <button><Icon name={props.iconName}/></button>;
 	});
 }
 
 function Input(props: InputProps) {
-	return withEnvScope(Input, null, () => <input type={props.type}/>);
+	return withEnvScope({}, null, () => <input type={props.type}/>);
 }
 
 function Form(props: FormProps) {
-	return withEnvScope(Form, null, () => {
+	return withEnvScope({}, null, () => {
 		const deps = $formDeps.use(props)
 		const {Icon = BaseIcon, Button, Input} = deps;
 

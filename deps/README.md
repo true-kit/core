@@ -12,16 +12,16 @@ npm i --save-dev @truekit/core
 
 ```tsx
 import { Deps } from '@truekit/core/deps';
-import { InputProps } from '@truekit/Button/types';
-import { ButtonProps } from '@truekit/Input/types';
+import { $input } from '@truekit/Input/types';
+import { $button } from '@truekit/Button/types';
 
 type FormProps = {
 	action: string;
 	method: 'GET' | 'POST';
 
 	deps?: Deps<{
-		Input: InputProps;
-		Bitton: ButtonProps;
+		Input: typeof $input;
+		Button: typeof $button;
 	}>;
 };
 ```

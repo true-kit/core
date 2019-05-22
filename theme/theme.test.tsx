@@ -5,8 +5,8 @@ import {
 	getTheme,
 	createThemeRegistry,
 	ThemeProvider,
-	createThemeForAll,
 	createThemeOverrideFor,
+	createThemeRegistryFor,
 } from './theme';
 import { resetCSS } from '@artifact-project/css';
 import { Theme } from './theme.types';
@@ -78,6 +78,13 @@ function Icon(props: IconProps) {
 		props.size && hostTheme.set('size', props.size);
 
 		return result;
+	});
+}
+
+function Btn(props: BtnProps) {
+	return withEnvScope($btn, null, () => {
+		const hostTheme = getTheme($btn, props).for('host');
+		return <button className={hostTheme}><Icon/><Text>{props.value}</Text></button>;
 	});
 }
 
@@ -340,6 +347,32 @@ describe('react', () => {
 					<Icon size="big"/>
 				</ThemeProvider>,
 			</ThemeProvider>,
+		)).toMatchSnapshot();
+	});
+
+	it('createThemeRegistryFor', () => {
+		const iconTheme = createThemeFor($icon, {
+			host: {color: 'red'},
+			elements: {},
+		});
+		const btnTheme = createThemeFor($btn, {
+			host: {color: 'green'},
+			elements: {},
+		});
+		const textTheme = createThemeFor($text, {
+			host: {color: 'blue'},
+			elements: {},
+		});
+		const rootTheme = createThemeRegistryFor($btn, {
+			[$btn.id]: btnTheme,
+			[$text.id]: textTheme,
+			[$icon.id]: iconTheme,
+		});
+
+		expect(render(
+			<ThemeProvider value={rootTheme}>
+				<Btn value="ok"/>
+			</ThemeProvider>
 		)).toMatchSnapshot();
 	});
 });

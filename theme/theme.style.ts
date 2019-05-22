@@ -10,6 +10,11 @@ export class ThemeStyle {
 		return this;
 	}
 
+	toDOMProps<T>(props: React.AllHTMLAttributes<T> = {}): React.AllHTMLAttributes<T> {
+		props.className = (this as any) as string;
+		return props;
+	}
+
 	toString() {
 		return this.classNames();
 	}

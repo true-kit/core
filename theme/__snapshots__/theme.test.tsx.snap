@@ -17,6 +17,8 @@ black: <i class=\\"_1\\"></i>
 black: <i class=\\"_1\\"></i>"
 `;
 
+exports[`react createThemeRegistryFor 1`] = `"<button class=\\"_1\\"><i class=\\"_0\\"></i><div class=\\"_2\\">ok</div></button>"`;
+
 exports[`react inline theme 1`] = `"<div class=\\"_0 _1\\">Wow!</div>"`;
 
 exports[`react with context 1`] = `"<div class=\\"_2 _3\\">Wow!</div><i class=\\"_0 _1\\"></i>,"`;
