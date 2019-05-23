@@ -8,7 +8,7 @@ npm i --save-dev @truekit/core
 
 ---
 
-![Logo](https://truekit.openode.io/logo)
+<img src="https://truekit.openode.io/logo.png" />
 
 ---
 
