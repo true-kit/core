@@ -29,6 +29,7 @@ export const EnvContext = createContext<EnvContextEntry>({
 	deps: null,
 	depsInjection: null,
 	theme: null,
+	slots: null,
 });
 
 export function withEnvScope<R>(
@@ -52,7 +53,7 @@ export function withEnvScope<R>(
 
 	if (overrideEnabled) {
 		// console.log('Start:', Owner && Owner.name);
-		// @todo: проверить наличиен чайлов, и если их нет, сразу возвращать `activeEnvScope`
+		// @todo: проверить наличие чайлдов, и если их нет, сразу возвращать `activeEnvScope`
 		return createElement(Fragment, null, fragment, createElement(envScopeEndAnchor)) as any as R;
 	}
 
@@ -65,7 +66,7 @@ export function getActiveEnvScope() {
 
 export function getEnvContext(): EnvContextEntry | null {
 	const ctx = useContext(EnvContext);
-	return ctx || null
+	return ctx || null;
 }
 
 export function createEnvContextProvider<K extends keyof EnvContextProps>(key: K) {
@@ -75,6 +76,7 @@ export function createEnvContextProvider<K extends keyof EnvContextProps>(key: K
 			deps: null,
 			depsInjection: null,
 			theme: null,
+			slots: null,
 		};
 		next[key] = props.value;
 

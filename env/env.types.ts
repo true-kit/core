@@ -5,6 +5,7 @@ export type EnvContextProps = {
 	deps: DepsRegistry | null;
 	depsInjection: Map<string, LikeComponent<any>> | null;
 	theme: ThemeRegistry | null;
+	slots: {[name:string]: any;} | null;
 }
 
 export type EnvContextEntry = EnvContextProps & {
