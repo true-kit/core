@@ -153,6 +153,7 @@ function addEnvScope(target: Function, depsInjection: Map<string, LikeComponent<
 			deps: null,
 			theme: null,
 			depsInjection,
+			slots: {},
 		};
 		return withEnvScope(null, entry, () => target(...args));
 	};
