@@ -29,7 +29,7 @@ export const EnvContext = createContext<EnvContextEntry>({
 	deps: null,
 	depsInjection: null,
 	theme: null,
-	slots: null,
+	props: null,
 });
 
 export function withEnvScope<R>(
@@ -47,6 +47,10 @@ export function withEnvScope<R>(
 		};
 
 		activeEnvScope = envScope;
+	}
+
+	if (ctx !== null && activeEnvScope !== null && ctx.props === null && activeEnvScope.ctx !== null) {
+		ctx.props = activeEnvScope.ctx.props;
 	}
 
 	const fragment = executer();
@@ -72,11 +76,11 @@ export function getEnvContext(): EnvContextEntry | null {
 export function createEnvContextProvider<K extends keyof EnvContextProps>(key: K) {
 	function Provider(props: EnvContextProviderProps<K>) {
 		const next: EnvContextEntry = {
-			parent: useContext(EnvContext),
+			parent: getEnvContext(),
 			deps: null,
 			depsInjection: null,
 			theme: null,
-			slots: null,
+			props: null,
 		};
 		next[key] = props.value;
 

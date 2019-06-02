@@ -8,6 +8,7 @@ import {
 	GetThemeFromDescriptor,
 	ThemeOverrideIndex,
 	AllThemes,
+	GetThemePredicate,
 } from './theme.types';
 
 import {
@@ -19,7 +20,7 @@ import {
 
 import { ThemeStyle } from './theme.style';
 
-import { DescriptorWithMeta, Last, Cast } from '../core.types';
+import { DescriptorWithMeta } from '../core.types';
 import { EnvContextEntry } from '../env/env.types';
 import { createEnvContextProvider, getEnvContext, getActiveEnvScope } from '../env/env';
 
@@ -147,27 +148,37 @@ export function getTheme<
 
 function getThemeOverride(list: ThemeOverride[], ctx: EnvContextEntry): Theme<any> | null {
 	for (let i = 0; i < list.length; i++) {
-		let {value: theme, xpath} = list[i];
-		let scope = getActiveEnvScope();
+		let {
+			value:theme,
+			xpath,
+			predicate,
+		} = list[i];
+		const scope = getActiveEnvScope();
+		let cursor = scope;
 
 		XPATH: for (let x = 0, xn = xpath.length; x < xn; x++) {
 			const descr = xpath[x];
 
 			while (true) {
-				scope = scope!.parent;
+				cursor = cursor!.parent;
 
-				if (scope === null || scope.ctx === ctx) {
+				if (cursor === null || cursor.ctx === ctx) {
 					theme = null as any;
 					break XPATH;
 				}
 
-				if (scope.owner === descr) {
+				if (cursor.owner === descr) {
 					break;
 				}
 			}
 		}
 
-		if (theme !== null) {
+		if (theme !== null && (predicate === null || (
+			scope !== null
+			&& scope.ctx !== null
+			&& scope.ctx.props !== null
+			&& predicate(scope.ctx.props)
+		))) {
 			return theme;
 		}
 	}
@@ -189,10 +200,11 @@ export function createThemeRegistry(
 			const xpath = override.xpath.slice();
 			const Node = xpath.pop();
 
-			if (xpath.length >= 1 && Node) {
+			if (xpath.length >= 0 && Node) {
 				index.set(Node, (index.get(Node) || []).concat({
 					value: override.value,
 					xpath,
+					predicate: override.predicate,
 				}));
 			} else {
 				console.warn('[@truekit/core: theme] Invalid override: ', override);
@@ -204,10 +216,37 @@ export function createThemeRegistry(
 }
 
 export function createThemeOverrideFor<
-	X extends DescriptorWithMeta<any, {theme?: Theme<any>}>[]
->(...xpath: X): (theme: GetThemeFromDescriptor<Last<X>>) => ThemeOverride {
-	return (theme): ThemeOverride => ({
-		value: theme as any,
-		xpath,
-	});
+	X extends DescriptorWithMeta<any, {theme?: Theme<any>}>
+>(
+	Target: X,
+	specificPath: DescriptorWithMeta<any, any>[]
+): (
+	theme: GetThemeFromDescriptor<X>,
+	predicate?: GetThemePredicate<X>,
+) => ThemeOverride {
+	return (theme, predicate): ThemeOverride => {
+		let p: ThemeOverride['predicate'] = null;
+
+		if (typeof predicate === 'function') {
+			p = predicate as any;
+		} else if (predicate != null) {
+			const keys = Object.keys(predicate as object);
+			const length = keys.length;
+			p = (props: object) => {
+				let idx = length;
+				while (idx--) {
+					if (props[keys[idx]] !== predicate[keys[idx]]) {
+						return false;
+					}
+				}
+				return true;
+			};
+		}
+
+		return {
+			value: theme as any,
+			xpath: specificPath.concat(Target),
+			predicate: p,
+		}
+	};
 }

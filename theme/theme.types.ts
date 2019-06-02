@@ -8,7 +8,12 @@ import {
 import { Deps } from '../deps';
 
 export type LikeComponent<T extends Theme<any>> = (props: {theme?: T}) => any;
+
 export type GetThemeFromDescriptor<D> = D extends DescriptorWithMeta<any, {theme?: infer T}> ? T : never;
+
+export type GetThemePredicate<D> = D extends DescriptorWithMeta<any, infer P>
+	? ((props: P) => boolean) | Partial<P> | null
+	: never;
 
 export type ThemeModsSpec = {
 	[name:string]: string | boolean | undefined;
@@ -196,6 +201,7 @@ export type ThemeRegistry = {
 export type ThemeOverride = {
 	value: Theme<any>;
 	xpath: DescriptorWithMeta<any, {theme?: Theme<any>}>[];
+	predicate: null | ((props: object) => boolean);
 }
 
 export type ThemeOverrideIndex = Map<DescriptorWithMeta<any, any>, ThemeOverride[]>;

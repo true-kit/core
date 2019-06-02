@@ -71,7 +71,7 @@ function Text(props: TextProps) {
 }
 
 function Icon(props: IconProps) {
-	return withEnvScope($icon, null, () => {
+	return withEnvScope($icon, {props, deps: null, depsInjection: null, theme: null}, () => {
 		const hostTheme = getTheme($icon, props).for('host');
 		const result = <i className={hostTheme}/>;
 
@@ -401,11 +401,11 @@ describe('overrides', () => {
 		});
 		const rootTheme = createThemeRegistry([textTheme, iconTheme]);
 		const redTheme = createThemeRegistry(null, [
-			createThemeOverrideFor($text, $text, $icon)(purpleIconTheme),
-			createThemeOverrideFor($text, $icon)(redIconTheme),
+			createThemeOverrideFor($icon, [$text, $text])(purpleIconTheme),
+			createThemeOverrideFor($icon, [$text])(redIconTheme),
 		]);
 		const blueTheme = createThemeRegistry(null, [
-			createThemeOverrideFor($text, $icon)(blueIconTheme),
+			createThemeOverrideFor($icon, [$text])(blueIconTheme),
 		]);
 		const icon = <Icon size="small"/>;
 
@@ -433,6 +433,28 @@ describe('overrides', () => {
 
 				black: <Icon size="small"/>
 			</ThemeProvider>,
+		)).toMatchSnapshot();
+	});
+
+	it('createThemeOverrideFor with predicate', () => {
+		const redIconTheme = createThemeFor($icon, {
+			host: {color: 'red'},
+			elements: {},
+		});
+		const purpleIconTheme = createThemeFor($icon, {
+			host: {color: 'purple'},
+			elements: {},
+		});
+		const overrideTheme = createThemeRegistry(null, [
+			createThemeOverrideFor($icon, [])(purpleIconTheme, {size: 'big'}),
+			createThemeOverrideFor($icon, [])(redIconTheme),
+		]);
+
+		expect(render(
+			<ThemeProvider value={overrideTheme}>
+				{'\t'}red: <Icon size="small"/>{'\n'}
+				{'\t'}purpleIconTheme: <Icon size="big"/>{'\n'}
+			</ThemeProvider>
 		)).toMatchSnapshot();
 	});
 });
