@@ -18,7 +18,7 @@ import {
 	createToStringCode,
 } from './theme.convert';
 
-import { ThemeStyle } from './theme.style';
+import { ThemeStyler } from './theme.styler';
 
 import { DescriptorWithMeta } from '../core.types';
 import { EnvContextEntry } from '../env/env.types';
@@ -55,7 +55,7 @@ export function createThemeFor<
 	];
 
 	createToStringCode(toStringCode, 'host', classes['host']);
-	Object.entries(classes['elements']).forEach(([name, classes]) => {
+	Object.entries(classes['elements']).forEach(([name, classes]: [string, object]) => {
 		createToStringCode(toStringCode, name, classes);
 	});
 
@@ -68,7 +68,7 @@ export function createThemeFor<
 		const store = this.store;
 
 		if (store === null || store.hasOwnProperty(name)) {
-			const style = new ThemeStyle(
+			const style = new ThemeStyler(
 				name,
 				name === 'host' ? classes[name] : classes['elements'][name],
 				classNames,

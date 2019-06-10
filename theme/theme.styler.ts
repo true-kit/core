@@ -1,4 +1,4 @@
-export class ThemeStyle {
+export class ThemeStyler {
 	state = {};
 
 	constructor(public name: string, public classes: object, private classNames: Function) {
@@ -20,4 +20,4 @@ export class ThemeStyle {
 	}
 }
 
-ThemeStyle.prototype.constructor = String;
+ThemeStyler.prototype.constructor = String;

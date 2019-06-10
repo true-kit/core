@@ -1,35 +1,41 @@
 import {
 	DescriptorWithMetaMap,
-	UnionToIntersection,
 	OptionalObject,
 	IsOptional,
 	Cast,
 	DescriptorWithMeta,
-	Descriptor,
 	FlattenObject,
 	Meta,
+	CastIntersect,
+	ToIntersect,
 } from '../core.types';
 
 export type LikeComponent<P extends object> = (props: P) => JSX.Element;
 
-export type Deps<T extends DepsDescriptor<any, any>> = DepsExport<T['map']> & Meta<T['map']>
+export type Deps<T extends DepsDescriptor<any, any>> = FlattenObject<DepsExport<T['map']> & Meta<T['map']>>
 
 export type DepsProps<T extends DescriptorWithMetaMap> = {
 	[K in keyof T]?: LikeComponent<NonNullable<T[K]>['meta']>;
 }
 
-export type DepsExport<T extends DescriptorWithMetaMap> = OptionalObject<UnionToIntersection<{
-	[K in keyof T]: IsOptional<T[K]> extends true
-		? { [X in K]?: LikeComponent<NonNullable<T[K]>['meta']> }
-		: { [X in K]: LikeComponent<NonNullable<T[K]>['meta']> }
-}[keyof T]>>;
+export type DepsExport<T extends DescriptorWithMetaMap> = OptionalObject<
+	CastIntersect<
+		{
+			[K in keyof T]: IsOptional<T[K]> extends true
+				? { [X in K]?: LikeComponent<NonNullable<T[K]>['meta']> }
+				: { [X in K]: LikeComponent<NonNullable<T[K]>['meta']> }
+		}[keyof T],
+		object
+	>
+>;
 
 type ToLikeComponents<T extends object> = {
 	[K in keyof T]: LikeComponent<Cast<T[K], object>>;
 }
 
-export type DepsInjection<T extends DescriptorWithMetaMap> =
-	ToLikeComponents<AllDeps<T, 'deps'>>;
+export type DepsInjection<T extends DescriptorWithMetaMap> = ToLikeComponents<
+	AllDeps<T, 'deps'>
+>;
 
 export type DepsDescriptor<
 	D extends DescriptorWithMeta<any, any>,
@@ -47,12 +53,17 @@ export type DepsRegistry = {
 export type AllDeps<
 	T extends DescriptorWithMetaMap,
 	KEYS extends string,
-> = FlattenObject<AllDepsWalker<T, KEYS>>
+> = FlattenObject<
+	CastIntersect<
+		AllDepsWalker<T, KEYS>,
+		object
+	>
+>
 
 type AllDepsWalker<
 	T extends DescriptorWithMetaMap,
 	KEYS extends string,
-> = UnionToIntersection<{
+> = ToIntersect<{
 	[K in keyof T]: AllDepsIterator<NonNullable<T[K]>, KEYS>;
 }[keyof T]>
 
@@ -61,7 +72,8 @@ type AllDepsIterator<
 	KEYS extends string,
 > = {
 	[X in T['id']]: T['meta'];
-} | { // Recursion
+} | {
+	// Recursion
 	next: {
 		[X in KEYS]: AllDepsWalker<
 			NonNullable<T['meta'][X]>,

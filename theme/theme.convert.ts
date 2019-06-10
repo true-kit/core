@@ -123,9 +123,11 @@ export function convertCSSRulesToCSSClasses<T extends IRuleDefinitions>(rules: T
 	return css(rules)
 }
 
-export function convertCSSClassesToThemeClasses<T extends IRuleDefinitions, M extends CSSMap<T>>(map: M) {
-	const classes = {
-	};
+export function convertCSSClassesToThemeClasses<
+	T extends IRuleDefinitions,
+	M extends CSSMap<T>,
+>(map: M): object {
+	const classes = {};
 
 	Object.entries(map).forEach(([key, val]) => {
 		const [elem, mod, state] = key.split(SEP);

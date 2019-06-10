@@ -14,13 +14,14 @@ export function optional<T>(v: T): T | undefined {
 
 /** @param name — must be unique string constant (don't use interpolation or concatenation) */
 export function createDescriptor<N extends string>(name: N): DescriptorWith<N> {
-	const descriptor: Descriptor<N> = {
+	const descriptor: DescriptorWith<N> = {
 		id: name,
 		name,
 		isOptional: false,
 		optional() {
 			return Object.create(this, {isOptional: {value: true}});
 		},
+		withMeta: () => descriptor as any,
 	};
 
 	if (reservedDescriptors.hasOwnProperty(name)) {
@@ -29,10 +30,7 @@ export function createDescriptor<N extends string>(name: N): DescriptorWith<N> {
 
 	reservedDescriptors[name] = descriptor;
 
-	return {
-		...descriptor,
-		withMeta: () => descriptor as any,
-	};
+	return descriptor;
 }
 
 export function createDescriptorWithMetaMap<T extends DescriptorWithMetaMap>(map: T): T {
