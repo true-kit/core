@@ -11,7 +11,7 @@ npm i --save-dev @truekit/core
 ### Usage
 
 ```tsx
-import { Theme, getTheme, createThemeFor } from '@truekit/core/theme';
+import { Theme, createThemeFor } from '@truekit/core/theme';
 
 // Describe some component props
 type TextProps = {
@@ -41,29 +41,7 @@ type TextProps = {
 	}>;
 };
 
-// Describe component
-function Text(props: TextProps) {
-	const {size, disabled, value, icon, iconAlign} = props;
-	const theme = getTheme(Text, props);
-
-	// Host
-	const hostTheme = theme.for('host');
-	size && hostTheme.set('size', size);
-	disabled && hostTheme.set('disabled', true);
-
-	// Icon
-	const iconTheme = theme.for('icon');
-	iconAlign && iconTheme.set('align', iconAlign);
-
-	return (
-		<div className={hostTheme}>
-			{icon && <span className={iconTheme}><img src={icon}/></span>}
-			<span className={theme.for('value')}>{value}</span>
-		</div>
-	);
-}
-
-const theme = createThemeFor(Text)({
+const theme = createThemeFor($Text, {
 	host: {
 		color: '#333',
 
