@@ -1,9 +1,9 @@
 import { IRuleDefinitions } from '@artifact-project/css';
 import {
 	FlattenObject,
-	UnionToIntersection,
 	DescriptorWithMeta,
 	GetMeta,
+	CastIntersect,
 } from '../core.types';
 import { Deps } from '../deps';
 
@@ -208,9 +208,14 @@ export type ThemeOverrideIndex = Map<DescriptorWithMeta<any, any>, ThemeOverride
 
 export type AllThemes<
 	T extends DescriptorWithMeta<any, any>
-> = FlattenObject<UnionToIntersection<__AllThemes__<T>>>
+> = FlattenObject<
+	CastIntersect<
+		GetAllThemes<T>,
+		object
+	>
+>
 
-type __AllThemes__<T extends DescriptorWithMeta<any, any>> = (
+type GetAllThemes<T extends DescriptorWithMeta<any, any>> = (
 	(T['meta'] extends {theme?: Theme<any>}
 		? {
 			[X in T['id']]: NonNullable<T['meta']['theme']>
@@ -224,5 +229,5 @@ type __AllThemes__<T extends DescriptorWithMeta<any, any>> = (
 )
 
 type DepsThemes<T extends {[k:string]: DescriptorWithMeta<any, any>}> = {
-	[K in keyof T]-?: __AllThemes__<NonNullable<T[K]>>;
+	[K in keyof T]-?: GetAllThemes<NonNullable<T[K]>>;
 }[keyof T]

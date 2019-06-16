@@ -12,22 +12,25 @@ import {
 
 export type LikeComponent<P extends object> = (props: P) => JSX.Element;
 
-export type Deps<T extends DepsDescriptor<any, any>> = FlattenObject<DepsExport<T['map']> & Meta<T['map']>>
+export type Deps<T extends DepsDescriptor<any, any>> = FlattenObject<
+	Cast<
+		DepsInline<T['map']>,
+		object
+	>
+> & Meta<T['map']>
 
 export type DepsProps<T extends DescriptorWithMetaMap> = {
 	[K in keyof T]?: LikeComponent<NonNullable<T[K]>['meta']>;
 }
 
-export type DepsExport<T extends DescriptorWithMetaMap> = OptionalObject<
-	CastIntersect<
-		{
-			[K in keyof T]: IsOptional<T[K]> extends true
-				? { [X in K]?: LikeComponent<NonNullable<T[K]>['meta']> }
-				: { [X in K]: LikeComponent<NonNullable<T[K]>['meta']> }
-		}[keyof T],
-		object
-	>
->;
+export type DepsInline<T extends DescriptorWithMetaMap> = CastIntersect<
+	{
+		[K in keyof T]: IsOptional<T[K]> extends true
+			? { [X in K]?: LikeComponent<NonNullable<T[K]>['meta']> }
+			: { [X in K]: LikeComponent<NonNullable<T[K]>['meta']> }
+	}[keyof T],
+	object
+>
 
 type ToLikeComponents<T extends object> = {
 	[K in keyof T]: LikeComponent<Cast<T[K], object>>;
@@ -43,7 +46,7 @@ export type DepsDescriptor<
 > = {
 	map: M;
 	descriptor: D,
-	use: (props: D['meta']) => DepsExport<M>;
+	use: (props: D['meta']) => DepsInline<M>;
 }
 
 export type DepsRegistry = {

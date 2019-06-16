@@ -51,17 +51,17 @@ export type Prepend<E, T extends any[]> =
 
 export type Cast<X, Y> = X extends Y ? X : Y;
 
-export interface Descriptor<N extends string> {
-	readonly id: N;
-	readonly name: N;
+export interface Descriptor<ID extends string> {
+	readonly id: ID;
+	readonly name: ID;
 	readonly isOptional: boolean;
 	optional(): this | undefined;
 }
 
-export type DescriptorWithMeta<N extends string, M> = Descriptor<N> & {meta: M};
+export type DescriptorWithMeta<ID extends string, M> = Descriptor<ID> & {meta: M};
 
-export type DescriptorWith<N extends string> = Descriptor<N> & {
-	withMeta: <M>() => DescriptorWithMeta<N, M>;
+export type DescriptorWith<ID extends string> = Descriptor<ID> & {
+	withMeta: <M>() => DescriptorWithMeta<ID, M>;
 }
 
 export type DescriptorWithMetaMap = {
