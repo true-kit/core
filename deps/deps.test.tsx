@@ -1,7 +1,15 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Deps } from './deps.types';
-import { createDepsDescriptorFor, createDepsInjectionFor, createDepsInjectionForAll, createDepsRegistry, DepsProvider } from './deps';
+import {
+	Deps, AllDeps, DepsInjection,
+} from './deps.types';
+import {
+	createDepsDescriptorFor,
+	createDepsInjectionFor,
+	createDepsInjectionForAll,
+	createDepsRegistry,
+	DepsProvider,
+} from './deps';
 import { createDescriptor } from '../core';
 import { withEnvScope } from '../env/env';
 
@@ -37,6 +45,8 @@ type FormProps = {
 	action: string;
 	deps?: Deps<typeof $formDeps>;
 }
+
+// type foo = DepsInjection<(typeof $formDeps['descriptor'])['meta']>;
 
 function BaseIcon(props: IconProps) {
 	return withEnvScope({}, null, () => <i className={props.name}/>);

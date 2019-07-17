@@ -8,6 +8,7 @@ import {
 	Meta,
 	CastIntersect,
 	ToIntersect,
+	GetMeta,
 } from '../core.types';
 
 export type LikeComponent<P extends object> = (props: P) => JSX.Element;
@@ -32,13 +33,7 @@ export type DepsInline<T extends DescriptorWithMetaMap> = CastIntersect<
 	object
 >
 
-type ToLikeComponents<T extends object> = {
-	[K in keyof T]: LikeComponent<Cast<T[K], object>>;
-}
-
-export type DepsInjection<T extends DescriptorWithMetaMap> = ToLikeComponents<
-	AllDeps<T, 'deps'>
->;
+export type DepsInjection<T extends DescriptorWithMetaMap> = FlattenObject<AllDeps<T>>;
 
 export type DepsDescriptor<
 	D extends DescriptorWithMeta<any, any>,
@@ -53,35 +48,38 @@ export type DepsRegistry = {
 	map: null | Map<string, Map<string, LikeComponent<any>>>;
 }
 
-export type AllDeps<
-	T extends DescriptorWithMetaMap,
-	KEYS extends string,
-> = FlattenObject<
-	CastIntersect<
-		AllDepsWalker<T, KEYS>,
+
+// Получить все зависимости на основе: {deps?: Deps<any>}
+export type AllDeps<T> = FlattenObject<
+	Cast<
+		FlattenDepsMap<
+			GetMetaDeps<T>
+		>,
 		object
 	>
 >
 
-type AllDepsWalker<
-	T extends DescriptorWithMetaMap,
-	KEYS extends string,
-> = ToIntersect<{
-	[K in keyof T]: AllDepsIterator<NonNullable<T[K]>, KEYS>;
-}[keyof T]>
+// Получить привязанные к `deps` мета-данные
+type GetMetaDeps<T> = T extends {deps?: infer D} ? GetMeta<D> : never;
 
-type AllDepsIterator<
-	T extends DescriptorWithMeta<any, any>,
-	KEYS extends string,
-> = {
-	[X in T['id']]: T['meta'];
-} | {
-	// Recursion
-	next: {
-		[X in KEYS]: AllDepsWalker<
-			NonNullable<T['meta'][X]>,
-			KEYS
-		>;
-	}[KEYS];
-	exit: never;
-}[T['meta'] extends {[X in KEYS]?: DescriptorWithMetaMap} ? 'next' : 'exit']
+// Преобразование из {LocalDepName: {DepId: LikeComponent<Props>}}
+//                                  ⬇️️️️ ⬇️ ⬇️
+//                        {DepId: LikeComponent<Props>}
+type FlattenDepsMap<T extends DescriptorWithMetaMap> = ToIntersect<{
+	[K in keyof T]: ConvertMetaDeps<NonNullable<T[K]>, IsOptional<T[K]>>;
+}[keyof T]>;
+
+// Преобразование дескриптора компонента в:
+//   {DepIdX: LikeComponent<XProps>} | {DepIdY: LikeComponent<YProps>} | ETC
+type ConvertMetaDeps<
+	T extends DescriptorWithMeta<string, object>,
+	OPTIONAL extends boolean,
+> = (
+	OPTIONAL extends true
+		? { [ID in T['id']]?: LikeComponent<T['meta']> }
+		: { [ID in T['id']]: LikeComponent<T['meta']> }
+) | (
+	HasDepsMap<T['meta']> extends true ? AllDeps<T['meta']> : never
+);
+
+type HasDepsMap<T> = T extends {deps?: DescriptorWithMetaMap} ? true : false;

@@ -15,6 +15,7 @@ export type FirstArgInfer<F> = F extends (first: infer F) => any ? F : never;
 
 export type Optional<T> = T | undefined;
 export type IsOptional<T> = ToIntersect<T> extends undefined ? true : false;
+export type NonOptional<T> = IsOptional<T> extends true ? NonNullable<T> : T;
 
 export type FlattenObject<T extends object> = {[K in keyof T]: T[K]};
 export type OptionalObject<T extends object> = ToIntersect<{

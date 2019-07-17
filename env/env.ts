@@ -82,7 +82,7 @@ export function createEnvContextProvider<K extends keyof EnvContextProps>(key: K
 			theme: null,
 			props: null,
 		};
-		next[key] = props.value;
+		next[key as string] = props.value;
 
 		return withEnvScope(null, next, () => {
 			return createElement(EnvContext.Provider, {value: next}, props.children);

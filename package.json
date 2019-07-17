@@ -24,14 +24,14 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^24.0.15",
-    "@types/node": "^11.13.14",
-    "@types/react": "^16.8.20",
+    "@types/node": "^11.13.17",
+    "@types/react": "^16.8.23",
     "@types/react-dom": "^16.8.4",
     "jest": "^24.8.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "ts-jest": "^24.0.2",
-    "typescript": "^3.5.2"
+    "typescript": "^3.5.3"
   },
   "dependencies": {
     "@artifact-project/css": "^0.1.4"

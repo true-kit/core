@@ -18,6 +18,7 @@ import {
 	DescriptorWithMetaMap,
 	Descriptor,
 } from '../core.types';
+
 import { createElement } from 'react';
 import { EnvContextProps } from '../env/env.types';
 
@@ -103,7 +104,7 @@ export function createDepsDescriptorFor<
 
 export function createDepsInjectionFor<
 	DD extends DepsDescriptor<any, any>,
->(deps: DD, map: Partial<DepsInjection<DD['map']>>) {
+>(deps: DD, map: Partial<DepsInjection<DD['descriptor']['meta']>>) {
 	return {
 		deps,
 		map,
@@ -112,7 +113,7 @@ export function createDepsInjectionFor<
 
 export function createDepsInjectionForAll<
 	DD extends DepsDescriptor<any, any>,
->(deps: DD, map: Required<DepsInjection<DD['map']>>) {
+>(deps: DD, map: DepsInjection<DD['descriptor']['meta']>) {
 	return {
 		deps,
 		map,
