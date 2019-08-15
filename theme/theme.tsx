@@ -3,12 +3,9 @@ import {
 	ThemeSpec,
 	Theme,
 	ThemeRegistry,
-	LikeComponent,
 	ThemeOverride,
-	GetThemeFromDescriptor,
-	ThemeOverrideIndex,
 	AllThemes,
-	GetThemePredicate,
+	GetThemeFromDescriptor,
 } from './theme.types';
 
 import {
@@ -20,15 +17,16 @@ import {
 
 import { ThemeStyler } from './theme.styler';
 
-import { DescriptorWithMeta } from '../core.types';
+import { DescriptorWithMeta, Predicate } from '../core.types';
 import { EnvContextEntry } from '../env/env.types';
 import { createEnvContextProvider, getEnvContext, getActiveEnvScope } from '../env/env';
+import { createDescriptorOverride, createDescriptorOverrideIndex } from '../core';
 
 
 export function createThemeRegistryFor<
 	D extends DescriptorWithMeta<any, any>
 >(
-	descriptor: D,
+	_: D,
 	themesMap: AllThemes<D>,
 	overrides?: ThemeOverride[] | null,
 ): ThemeRegistry {
@@ -105,16 +103,22 @@ const nullTheme = createThemeFor(null as any, {
 
 export const ThemeProvider = createEnvContextProvider('theme');
 
-export function getTheme<
-	D extends DescriptorWithMeta<any, {theme?: Theme<any>}>,
+export function useTheme<
+	D extends DescriptorWithMeta<string, {theme?: Theme<any>}>,
 	T extends Theme<any> = NonNullable<D['meta']['theme']>,
->(descriptor: D, props: {theme?: T}): T {
+>(
+	descriptor: D,
+	props: {theme?: T},
+	ctx: EnvContextEntry | null,
+): T {
 	let theme = props.theme;
 
 	if (theme == null) {
 		theme = nullTheme as T;
 
-		let ctx = getEnvContext();
+		if (ctx === null) {
+			ctx = getEnvContext();
+		}
 
 		while (ctx && ctx.theme) {
 			const {
@@ -159,8 +163,8 @@ function getThemeOverride(list: ThemeOverride[], ctx: EnvContextEntry): Theme<an
 		XPATH: for (let x = 0, xn = xpath.length; x < xn; x++) {
 			const descr = xpath[x];
 
-			while (true) {
-				cursor = cursor!.parent;
+			while (cursor) {
+				cursor = cursor.parent;
 
 				if (cursor === null || cursor.ctx === ctx) {
 					theme = null as any;
@@ -196,57 +200,21 @@ export function createThemeRegistry(
 			return map;
 		}, new Map),
 
-		overrides: !overrides ? null : overrides.reduce((index, override) => {
-			const xpath = override.xpath.slice();
-			const Node = xpath.pop();
-
-			if (xpath.length >= 0 && Node) {
-				index.set(Node, (index.get(Node) || []).concat({
-					value: override.value,
-					xpath,
-					predicate: override.predicate,
-				}));
-			} else {
-				console.warn('[@truekit/core: theme] Invalid override: ', override);
-			}
-
-			return index;
-		}, new Map as ThemeOverrideIndex),
+		overrides: !overrides ? null : createDescriptorOverrideIndex(overrides),
 	};
 }
 
 export function createThemeOverrideFor<
-	X extends DescriptorWithMeta<any, {theme?: Theme<any>}>
+	D extends DescriptorWithMeta<string, {theme?: Theme<any>}>
 >(
-	Target: X,
-	specificPath: DescriptorWithMeta<any, any>[]
+	Target: D,
+	specificPath: DescriptorWithMeta<string, object>[],
+	predicate?: Predicate<D['meta']>,
 ): (
-	theme: GetThemeFromDescriptor<X>,
-	predicate?: GetThemePredicate<X>,
+	theme: GetThemeFromDescriptor<D>,
 ) => ThemeOverride {
-	return (theme, predicate): ThemeOverride => {
-		let p: ThemeOverride['predicate'] = null;
-
-		if (typeof predicate === 'function') {
-			p = predicate as any;
-		} else if (predicate != null) {
-			const keys = Object.keys(predicate as object);
-			const length = keys.length;
-			p = (props: object) => {
-				let idx = length;
-				while (idx--) {
-					if (props[keys[idx]] !== predicate[keys[idx]]) {
-						return false;
-					}
-				}
-				return true;
-			};
-		}
-
-		return {
-			value: theme as any,
-			xpath: specificPath.concat(Target),
-			predicate: p,
-		}
-	};
+	return (theme) => ({
+		...createDescriptorOverride(Target, specificPath, predicate),
+		value: theme,
+	});
 }

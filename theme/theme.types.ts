@@ -4,16 +4,12 @@ import {
 	DescriptorWithMeta,
 	GetMeta,
 	CastIntersect,
+	DescriptorOverride,
+	DescriptorOverrideIndex,
 } from '../core.types';
 import { Deps } from '../deps';
 
-export type LikeComponent<T extends Theme<any>> = (props: {theme?: T}) => any;
-
 export type GetThemeFromDescriptor<D> = D extends DescriptorWithMeta<any, {theme?: infer T}> ? T : never;
-
-export type GetThemePredicate<D> = D extends DescriptorWithMeta<any, infer P>
-	? ((props: P) => boolean) | Partial<P> | null
-	: never;
 
 export type ThemeModsSpec = {
 	[name:string]: string | boolean | undefined;
@@ -78,39 +74,61 @@ export type ThemeElement<N, T extends boolean | ThemeModsSpec> = {
 
 export type CSSProps = Partial<React.CSSProperties>;
 
+type CanSelf = '>' | '+' | '!';
+type ThemeRuleType = '&' | '>' | '+' | '!';
+
 // Rule
 export type ThemeRule<
 	M extends ThemeModsSpec | ThemeElementsSpec,
 	E extends ThemeElementsSpec,
 	A extends ThemeModsSpec | ThemeElementsSpec = E, // Adjacent Sibling Selector
+	T extends ThemeRuleType = '&'
 > = CSSProps
 	& ThemePseudoRules<M, E>
-	& ThemeNotRule<M, E, A>
-	& ThemeSelfRefRule<M, E, A>
-	& {
-	'+'?: ThemeRule<M, E, A>
-	':nested'?: ThemeAnyRule & ThemeElementsRules<E> & ThemeNotRule<M, E>;
-}
+	& (T extends '!' ? {} : ThemeNotRule<M, E, A>)
+	& (T extends '+' ? {} : ThemePlusRule<M, E, A>)
+	& (T extends '>' ? {} : ThemeNestedRule<M, E>)
+	& (T extends CanSelf ? ThemeSelfRefRule<M, E, A> : {})
+
 
 // '*' — AnyRule
-export type ThemeAnyRule = {
+type ThemeAnyRule = {
 	'*'?: {
 		[selector:string]: CSSProps;
 	};
 };
 
-// ':not(...)'
-export type ThemeNotRule<
+// '+'
+type ThemePlusRule<
 	M extends ThemeModsSpec | ThemeElementsSpec,
 	E extends ThemeElementsSpec,
 	A extends ThemeModsSpec | ThemeElementsSpec = E,
 > = {
-	':not'?: ThemeSelfRefRule<M, E, A> & ThemePseudoRules<M, E> & {
+	'+'?: ThemePseudoRules<M, E> & ThemeNotRule<M, E, A> & ThemeSelfRefRule<M, E, A>;
+}
+
+// '*'
+type ThemeNestedRule<
+	M extends ThemeModsSpec | ThemeElementsSpec,
+	E extends ThemeElementsSpec,
+> = {
+	':nested'?: ThemeAnyRule & ThemeElementsRules<E, '>'> & ThemeNotRule<E, E>
+}
+
+// ':not(...)'
+type ThemeNotRule<
+	M extends ThemeModsSpec | ThemeElementsSpec,
+	E extends ThemeElementsSpec,
+	A extends ThemeModsSpec | ThemeElementsSpec = E,
+> = {
+	':not'?: ThemePseudoRules<M, E> & {
 		[K in keyof M]?: M[K] extends string
-			? {[V in M[K]]?: ThemeRule<M, E>}
+			? {
+				[V in M[K]]?: ThemeRule<M, E, E>;
+			}
 			: (M[K] extends ThemeModsSpec
-				? ThemeRule<M[K], E> & ThemeModifiersRule<M[K], E>
-				: ThemeRule<M, E>
+				? ThemeRule<M[K], E, E> & ThemeModifiersRule<M[K], E>
+				: ThemeRule<M, E, E>
 			)
 	};
 }
@@ -120,21 +138,24 @@ export type ThemeSelfRefRule<
 	M extends ThemeModsSpec | ThemeElementsSpec,
 	E extends ThemeElementsSpec,
 	A extends ThemeModsSpec | ThemeElementsSpec = E,
-> = A extends ThemeModsSpec
-	? ThemeAnyRule & ThemeNotRule<M, E> & {
-		'&'?: (M extends ThemeElementsSpec
-			? ThemeRule<M, E, A> & ThemeModifiersRule<A, E>
-			: ThemeHostRule<A, E>
-		);
-	}
+	T extends ThemeRuleType = '&',
+> = ThemeAnyRule
+	& (T extends '!' ? {} : ThemeNotRule<M, E>)
+	& (A extends ThemeModsSpec
+		? {
+			'&'?: (M extends ThemeElementsSpec
+				? ThemeRule<M, E, A> & ThemeModifiersRule<A, E>
+				: ThemeHostRule<A, E>
+			);
+		}
 
-	: ThemeElementsRules<E> & ThemeAnyRule & ThemeNotRule<M, E> & {
-		'&'?: (M extends ThemeModsSpec
-			? ThemeRule<A, E> & ThemeModifiersRule<M, E>
-			: ThemeRule<A, E>
-		);
-	}
-;
+		: ThemeElementsRules<E> & {
+			'&'?: (M extends ThemeModsSpec
+				? ThemeRule<A, E> & ThemeModifiersRule<M, E>
+				: ThemeRule<A, E>
+			);
+		}
+	)
 
 // ':pseudo' — Pseudo selector rule
 export type ThemePseudoRules<
@@ -181,15 +202,22 @@ export type ThemeModifiersRuleWithSelf<
 > = {
 	':modifiers'?: {
 		[K in keyof M]?: M[K] extends string
-			? {[V in M[K]]?: ThemeRule<M, E>} & {':self'?: ThemeRule<M, E>}
+			? {
+				[V in M[K]]?: ThemeRule<M, E>;
+			} & {
+				':self'?: ThemeRule<M, E>;
+			}
 			: ThemeRule<M, E>
 	};
 }
 
-export type ThemeElementsRules<E extends ThemeElementsSpec> = {
+export type ThemeElementsRules<
+	E extends ThemeElementsSpec,
+	T extends ThemeRuleType = '&',
+> = {
 	[K in keyof E]?: E[K] extends ThemeModsSpec
-		? ThemeRule<E, E> & ThemeModifiersRule<E[K], E>
-		: ThemeRule<E, E>
+		? ThemeRule<E, E, E, T> & ThemeModifiersRule<E[K], E>
+		: ThemeRule<E, E, E, T>
 	;
 }
 
@@ -198,13 +226,11 @@ export type ThemeRegistry = {
 	overrides: ThemeOverrideIndex | null;
 }
 
-export type ThemeOverride = {
+export type ThemeOverride = DescriptorOverride & {
 	value: Theme<any>;
-	xpath: DescriptorWithMeta<any, {theme?: Theme<any>}>[];
-	predicate: null | ((props: object) => boolean);
 }
 
-export type ThemeOverrideIndex = Map<DescriptorWithMeta<any, any>, ThemeOverride[]>;
+export type ThemeOverrideIndex = DescriptorOverrideIndex<ThemeOverride>;
 
 export type AllThemes<
 	T extends DescriptorWithMeta<any, any>

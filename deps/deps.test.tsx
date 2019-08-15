@@ -1,14 +1,14 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {
-	Deps, AllDeps, DepsInjection,
+	Deps, DepsInline,
 } from './deps.types';
 import {
-	createDepsDescriptorFor,
-	createDepsInjectionFor,
-	createDepsInjectionForAll,
+	createDepsDescriptor,
 	createDepsRegistry,
 	DepsProvider,
+	createDepsBy,
+	createStrictDepsBy,
 } from './deps';
 import { createDescriptor } from '../core';
 import { withEnvScope } from '../env/env';
@@ -18,11 +18,11 @@ const $button = createDescriptor('@truekit/core/deps: button').withMeta<ButtonPr
 const $input = createDescriptor('@truekit/core/deps: input').withMeta<InputProps>();
 const $form = createDescriptor('@truekit/core/deps: form').withMeta<FormProps>();
 
-const $buttonDeps = createDepsDescriptorFor($button, {
+const $buttonDeps = createDepsDescriptor($button, {
 	Icon: $icon.optional(),
 });
 
-const $formDeps = createDepsDescriptorFor($form, {
+const $formDeps = createDepsDescriptor($form, {
 	Input: $input,
 	Button: $button,
 	Icon: $icon.optional(),
@@ -46,7 +46,10 @@ type FormProps = {
 	deps?: Deps<typeof $formDeps>;
 }
 
-// type foo = DepsInjection<(typeof $formDeps['descriptor'])['meta']>;
+type GetD<T> = T extends {deps?: infer D}
+	? D extends Deps<infer DD> ? DD['map'] : never
+	: never;
+type Foo1 = GetD<FormProps>;
 
 function BaseIcon(props: IconProps) {
 	return withEnvScope({}, null, () => <i className={props.name}/>);
@@ -62,7 +65,7 @@ function StrongIcon(props: IconProps) {
 
 function IconButton(props: ButtonProps) {
 	return withEnvScope({}, null, () => {
-		const {Icon = BaseIcon} = $buttonDeps.use(props);
+		const {Icon = BaseIcon} = $buttonDeps.use(props, null);
 		return <button><Icon name={props.iconName}/></button>;
 	});
 }
@@ -73,7 +76,7 @@ function Input(props: InputProps) {
 
 function Form(props: FormProps) {
 	return withEnvScope({}, null, () => {
-		const deps = $formDeps.use(props)
+		const deps = $formDeps.use(props, null);
 		const {Icon = BaseIcon, Button, Input} = deps;
 
 		return <>
@@ -102,9 +105,9 @@ it('deps: inline', () => {
 });
 
 it('deps: context', () => {
-	const emptyInj = createDepsInjectionFor($buttonDeps, {});
-	const emInj = createDepsInjectionFor($buttonDeps, {[$icon.id]: EmIcon});
-	const strongInj = createDepsInjectionForAll($buttonDeps, {[$icon.id]: StrongIcon});
+	const emptyInj = createDepsBy($buttonDeps, {});
+	const emInj = createDepsBy($buttonDeps, {[$icon.id]: EmIcon});
+	const strongInj = createStrictDepsBy($buttonDeps, {[$icon.id]: StrongIcon});
 
 	expect(render(
 		<DepsProvider value={createDepsRegistry([emInj])}>
@@ -126,7 +129,7 @@ it('deps: fail', () => {
 });
 
 it('deps: form', () => {
-	const formInj = createDepsInjectionForAll($formDeps, {
+	const formInj = createStrictDepsBy($formDeps, {
 		[$button.id]: IconButton,
 		[$input.id]: Input,
 		[$icon.id]: StrongIcon,
@@ -134,15 +137,15 @@ it('deps: form', () => {
 
 	expect(render(
 		<DepsProvider value={createDepsRegistry([formInj])}>
-			<IconButton iconName="default" />{'\n'}
+			<IconButton iconName="STRONG, yep" />{'\n'}
 			<Form action="/send"/>
 		</DepsProvider>
 	)).toMatchSnapshot();
 });
 
 it('deps: btn + form', () => {
-	const emBtnInj = createDepsInjectionFor($buttonDeps, {[$icon.id]: EmIcon});
-	const formInj = createDepsInjectionForAll($formDeps, {
+	const emBtnInj = createDepsBy($buttonDeps, {[$icon.id]: EmIcon});
+	const formInj = createStrictDepsBy($formDeps, {
 		[$button.id]: IconButton,
 		[$input.id]: Input,
 		[$icon.id]: StrongIcon,
@@ -150,7 +153,7 @@ it('deps: btn + form', () => {
 
 	expect(render(
 		<DepsProvider value={createDepsRegistry([emBtnInj, formInj])}>
-			<IconButton iconName="EM" />{'\n'}
+			<IconButton iconName="STRONG, yep" />{'\n'}
 			<Form action="/send"/>
 		</DepsProvider>
 	)).toMatchSnapshot();

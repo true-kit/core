@@ -1,0 +1,98 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`component Btn with all deps and themes 1`] = `"<button type=\\"password\\" class=\\"_0 _1\\"><i class=\\"_3\\">pic</i><span class=\\"_2\\">qux</span></button>"`;
+
+exports[`component Btn with deps overrides 1`] = `
+"<i class=\\"\\">default</i>
+<div>
+	<em class=\\"\\">over-1</em>
+	<div>
+		<strong class=\\"\\">over-2</strong>
+		<span class=\\"\\">over-3</span>
+	</div>
+</div>"
+`;
+
+exports[`component Btn with inline deps and inline root theme 1`] = `"<button type=\\"password\\" class=\\"_0 _1\\"><i class=\\"\\">pic</i><span class=\\"_2\\">baz</span></button>"`;
+
+exports[`component Btn with inline deps and without theme 1`] = `"<button type=\\"password\\" class=\\"\\"><i class=\\"\\">pic</i><span class=\\"\\">bar</span></button>"`;
+
+exports[`component Btn without theme and deps 1`] = `
+"<button type=\\"password\\" class=\\"\\"><i>
+		Dep '@truekit/core/cmp: Icon' (aka 'Icon') not found
+	</i><span class=\\"\\">foo</span></button>"
+`;
+
+exports[`component slots default slots 1`] = `
+"<div class=\\"\\">
+	
+	<div>num: 123</div>
+	<div>val: wow</div>
+	<div>fragment: <b>bold</b>!</div>
+	<div>
+		callback:
+		<h2>Hi, RubaXa!</h2>
+	</div>
+</div>"
+`;
+
+exports[`component slots override num and str slot 1`] = `
+"<div class=\\"\\">
+	
+	<div>num: 321</div>
+	<div>val: </div>
+	<div>fragment: <b>bold</b>!</div>
+	<div>
+		callback:
+		<h2>Hi, RubaXa!</h2>
+	</div>
+</div>"
+`;
+
+exports[`component slots override slot with parent 1`] = `
+"<div class=\\"\\">
+	
+	<div>num: 246</div>
+	<div>val: wow</div>
+	<div>fragment: <b>bold</b>!</div>
+	<div>
+		callback:
+		<h2>Hi, RubaXa!</h2><br>Yes, RubaXa.
+	</div>
+</div>"
+`;
+
+exports[`component slots slots with nested 1`] = `
+"<div class=\\"_4\\">
+	
+	<div class=\\"_5\\">
+	
+	<div>num: 369</div>
+	<div>val: wow</div>
+	<div>fragment: <b>bold</b>!</div>
+	<div>
+		callback:
+		
+	</div>
+</div>
+	---
+	<div class=\\"_6\\">
+	
+	<div>num: 492</div>
+	<div>val: wow</div>
+	<div>fragment: <b>bold</b>!</div>
+	<div>
+		callback:
+		
+	</div>
+</div>
+	
+	<div>num: 246</div>
+	<div>val: wow</div>
+	<div>fragment: <b>bold</b>!</div>
+	<div>
+		callback:
+		<h2>Hi, RubaXa!</h2>
+	</div>
+</div>"
+`;

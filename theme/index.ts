@@ -1,5 +1,5 @@
 export {
-	getTheme,
+	useTheme,
 	ThemeProvider,
 	createThemeFor,
 	createThemeRegistry,

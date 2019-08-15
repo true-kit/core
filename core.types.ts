@@ -17,12 +17,16 @@ export type Optional<T> = T | undefined;
 export type IsOptional<T> = ToIntersect<T> extends undefined ? true : false;
 export type NonOptional<T> = IsOptional<T> extends true ? NonNullable<T> : T;
 
-export type FlattenObject<T extends object> = {[K in keyof T]: T[K]};
-export type OptionalObject<T extends object> = ToIntersect<{
+export type FlattenObject<T> = T extends object ? {[K in keyof T]: T[K]} : never;
+export type OptionalObject<T> = T extends object ? ToIntersect<{
 	[K in keyof T]: IsOptional<T[K]> extends true
 		? {[X in K]?: T[K]}
 		: {[X in K]: T[K]}
-}[keyof T]>;
+}[keyof T]> : never;
+
+export type CleanObject<T extends object> = CastIntersect<{
+	[K in keyof T]: T[K] extends never ? never : {[X in K]: T[K]}
+}[keyof T], object>;
 
 export type Head<T extends any[]> = T extends [any, ...any[]]
 	? T[0]
@@ -78,3 +82,18 @@ export type Meta<T> = {
 export type GetMeta<T extends {[__meta__]?: any}> = {
 	[K in keyof T]-?: K extends symbol ? T[K] : never;
 }[keyof T]
+
+export type Predicate<T extends object> = ((props: T) => boolean) | Partial<T> | null | undefined
+export type PredicateFunc<T extends object> = ((props: T) => boolean) | null
+export type DescriptorOverride = {
+	xpath: DescriptorWithMeta<string, object>[];
+	predicate: PredicateFunc<object>;
+}
+
+export type DescriptorOverrideIndex<T extends DescriptorOverride> = Map<
+	DescriptorWithMeta<string, object>,
+	T[]
+>
+
+export type LikeFragment = JSX.Element;
+export type LikeComponent<P extends object> = (props: P) => LikeFragment;

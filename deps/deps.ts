@@ -1,30 +1,33 @@
 import {
 	Deps,
 	DepsDescriptor,
-	DepsInjection,
+	DepsMapBy,
 	DepsRegistry,
-	LikeComponent,
+	DepOverride,
+	DepsMap,
 } from './deps.types';
 
 import {
 	getEnvContext,
 	createEnvContextProvider,
 	withEnvScope,
-	getActiveEnvScope,
 } from '../env/env';
 
 import {
 	DescriptorWithMeta,
 	DescriptorWithMetaMap,
 	Descriptor,
+	Predicate,
+	LikeComponent,
 } from '../core.types';
 
 import { createElement } from 'react';
 import { EnvContextProps } from '../env/env.types';
+import { createDescriptorOverrideIndex, createDescriptorOverride } from '../core';
 
 export const DepsProvider = createEnvContextProvider('deps');
 
-export function createDepsDescriptorFor<
+export function createDepsDescriptor<
 	D extends DescriptorWithMeta<any, any>,
 	M extends DescriptorWithMetaMap,
 >(descriptor: D, map: M): DepsDescriptor<D, M> {
@@ -35,44 +38,48 @@ export function createDepsDescriptorFor<
 		descriptor,
 		map,
 
-		use(props) {
-			if (hasDepsProp(props)) {
-				return props.deps;
+		use(props, ctx) {
+			const result = {};
+
+			if (!mapEntriesLen) {
+				return result;
 			}
 
-			const result = {};
 			let resolved = mapEntriesLen; // количество зависимостей, которые нужно зарезолвить
-			let ctx = getEnvContext();
+
+			if (ctx === null) {
+				ctx = getEnvContext();
+			}
+
+			if (hasDepsProp(props)) {
+				for (let key in props.deps) {
+					if (props.deps.hasOwnProperty(key) && map.hasOwnProperty(key)) {
+						result[key] = props.deps[key];
+						resolved--;
+					}
+				}
+
+				if (resolved === 0) {
+					return result;
+				}
+			}
 
 			MAIN: while (ctx) {
-				const deps = ctx.deps;
-				let envScope = getActiveEnvScope();
+				const depsRegistry = ctx.deps;
 				let i = mapEntriesLen;
 
-				if (deps && i > 0) {
-					const {map:depsFor} = deps;
+				if (depsRegistry && i > 0) {
+					const {
+						map:depsMap,
+					} = depsRegistry;
 
-					while (envScope) {
-						const injection = envScope.ctx && envScope.ctx.depsInjection;
-
-						if (injection) {
-							while (i--) {
-								if (resolveDeps(result, mapEntries[i], injection)) {
-									if (--resolved == 0) {
-										break MAIN;
-									}
-								}
-							}
-						}
-
-						envScope = envScope.parent;
-					}
-
-					if (depsFor && depsFor.has(descriptor.id)) {
-						const injection = depsFor.get(descriptor.id)!;
-
+					if (depsMap !== null) {
 						while (i--) {
-							if (resolveDeps(result, mapEntries[i], injection, true)) {
+							const [depAs, dd] = mapEntries[i];
+
+							if (depsMap.hasOwnProperty(dd!.id) && !result.hasOwnProperty(depAs)) {
+								result[depAs] = depsMap[dd!.id];
+
 								if (--resolved == 0) {
 									break MAIN;
 								}
@@ -102,46 +109,42 @@ export function createDepsDescriptorFor<
 	};
 }
 
-export function createDepsInjectionFor<
-	DD extends DepsDescriptor<any, any>,
->(deps: DD, map: Partial<DepsInjection<DD['descriptor']['meta']>>) {
-	return {
-		deps,
-		map,
-	};
+export function createDeps<T extends DepsMap>(map: T): T {
+	return map;
 }
 
-export function createDepsInjectionForAll<
+export function createDepsBy<
 	DD extends DepsDescriptor<any, any>,
->(deps: DD, map: DepsInjection<DD['descriptor']['meta']>) {
-	return {
-		deps,
-		map,
-	};
+>(_: DD, map: Partial<DepsMapBy<DD['map']>>): DepsMap {
+	return Object(map);
+}
+
+export function createStrictDepsBy<
+	DD extends DepsDescriptor<any, any>,
+>(_: DD, map: DepsMapBy<DD['map']>): DepsMap {
+	return Object(map);
 }
 
 export function createDepsRegistry(
-	list: Array<{deps: DepsDescriptor<any, any>; map: DepsInjection<any>}>
+	list: Array<DepsMap>,
+	overrides?: DepOverride[],
 ): DepsRegistry {
 	return {
-		map: !list ? null : list.reduce((index, entry) => {
-			index.set(
-				entry.deps.descriptor.id,
-				Object.entries(entry.map).reduce((map, [id, Component]) => {
-					map.set(id, Component);
-					return map;
-				}, new Map),
-			);
-			return index;
-		}, new Map),
+		map: !list.length ? null : list.reduce((map, entry) => ({
+			...map,
+			...Object(entry),
+		}), {}),
+
+		overrides: !overrides ? null : createDescriptorOverrideIndex(overrides),
 	};
 }
+
 
 function hasDepsProp(props: object): props is Deps<any> {
 	return props.hasOwnProperty('deps');
 }
 
-function createNullDep(descr: Descriptor<any>, alias: string, depDescr: Descriptor<any>) {
+function createNullDep(_: Descriptor<any>, alias: string, depDescr: Descriptor<any>) {
 	// @todo: Логгер
 	return () => createElement('i', {}, `
 		Dep '${depDescr.name}' (aka '${alias}') not found
@@ -164,7 +167,7 @@ function resolveDeps(
 	result: object,
 	entry: [string, Descriptor<any> | undefined],
 	injection: Map<string, LikeComponent<any>>,
-	useEnvScope?: boolean,
+	useEnvScope: boolean,
 ) {
 	const [key, descr] = entry!;
 
@@ -181,4 +184,19 @@ function resolveDeps(
 
 		return true;
 	}
+}
+
+export function createDepOverride<
+	D extends DescriptorWithMeta<string, object>
+>(
+	$Target: D,
+	specificPath: DescriptorWithMeta<string, object>[],
+	predicate?: Predicate<D['meta']>,
+): (
+	Replacement: LikeComponent<D['meta']>,
+) => DepOverride {
+	return (value) => ({
+		...createDescriptorOverride($Target, specificPath, predicate),
+		value,
+	});
 }

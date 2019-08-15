@@ -98,18 +98,18 @@ function convertThemeRuleToCSSRules(sel: Selector, rule: ThemeRule<any, any>, cs
 		if (value && typeof value === 'object') {
 			if (key.charCodeAt(0) === COLON_CODE) {
 				if (key === ':modifiers' || key === ':self') {
-					convertThemeRuleToCSSRules(sel, value, css);
+					convertThemeRuleToCSSRules(sel, value!, css);
 				} else if (key === ':not') {
-					convertThemeRuleToCSSRules(sel.add(key, 'fn'), value, css);
+					convertThemeRuleToCSSRules(sel.add(key, 'fn'), value!, css);
 				} else {
-					convertThemeRuleToCSSRules(sel.add(key, ':'), value, css);
+					convertThemeRuleToCSSRules(sel.add(key, ':'), value!, css);
 				}
 			} else if (key === '+') {
-				convertThemeRuleToCSSRules(sel.add('+', '+'), value, css);
+				convertThemeRuleToCSSRules(sel.add('+', '+'), value!, css);
 			} else if (key === '&') {
-				convertThemeRuleToCSSRules(sel.add('&'), value, css);
+				convertThemeRuleToCSSRules(sel.add('&'), value!, css);
 			} else {
-				convertThemeRuleToCSSRules(sel.add(key), value, css);
+				convertThemeRuleToCSSRules(sel.add(key), value!, css);
 			}
 		} else {
 			const name = sel.toString();

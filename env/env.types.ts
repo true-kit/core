@@ -1,5 +1,6 @@
-import { DepsRegistry, LikeComponent } from '../deps/deps.types';
+import { DepsRegistry } from '../deps/deps.types';
 import { ThemeRegistry } from '../theme/theme.types';
+import { LikeComponent } from '../core.types';
 
 export type EnvContextProps = {
 	deps: DepsRegistry | null;
