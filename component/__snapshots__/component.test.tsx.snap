@@ -62,6 +62,62 @@ exports[`component slots override slot with parent 1`] = `
 </div>"
 `;
 
+exports[`component slots slot with is defaults 1`] = `
+"<h1>Primary</h1>
+Sub
+<h4></h4>
+"
+`;
+
+exports[`component slots slot with is header is null 1`] = `
+"
+Sub
+<h4></h4>
+"
+`;
+
+exports[`component slots slot with is header is undefined 1`] = `
+"<h1>Primary</h1>
+Sub
+<h4></h4>
+"
+`;
+
+exports[`component slots slot with is lastHeaderEl is h3 1`] = `
+"<h1>Primary</h1>
+Sub
+<h3></h3>
+"
+`;
+
+exports[`component slots slot with is lastHeaderEl is null 1`] = `
+"<h1>Primary</h1>
+Sub
+
+"
+`;
+
+exports[`component slots slot with is lastHeaderEl is undefined 1`] = `
+"<h1>Primary</h1>
+Sub
+<h4></h4>
+"
+`;
+
+exports[`component slots slot with is subHeaderEl is h2 1`] = `
+"<h1>Primary</h1>
+<h2>Sub</h2>
+<h4></h4>
+"
+`;
+
+exports[`component slots slot with is subHeaderEl is h2 with override 1`] = `
+"<h1>Primary</h1>
+<h2>Wow!</h2>
+<h4></h4>
+"
+`;
+
 exports[`component slots slots with nested 1`] = `
 "<div class=\\"_4\\">
 	

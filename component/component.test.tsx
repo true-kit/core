@@ -16,7 +16,7 @@ import {
 	createThemeRegistry,
 } from '../theme/theme';
 import { resetCSS } from '@artifact-project/css';
-import { SlotContent, SlotProp } from './component.types';
+import { SlotContent, SlotProp, SlotElement } from './component.types';
 
 const $Icon = createComponentDescriptor('@truekit/core/cmp: Icon', {} as IconProps, {});
 const $Btn = createComponentDescriptor('@truekit/core/cmp: Btn', {} as BtnProps, {
@@ -208,6 +208,53 @@ describe('component slots', () => {
 			slotNum={(parent) => parent * 2}
 			slotWithValue={(parent, value) => <>{parent(value)}<br/>Yes, {value.username}.</>}
 		/>)).toMatchSnapshot();
+	});
+
+	describe('slot with is', () => {
+		const $WithIS = createComponentDescriptor('@truekit/core/cmp: WithIS', {} as {
+			header?: SlotProp< SlotContent >;
+			subHeader?: SlotProp< SlotContent >;
+			subHeaderEl?: SlotElement;
+			lastHeader?: SlotProp< SlotContent >;
+			lastHeaderEl?: SlotElement;
+		});
+		const WithIS = $WithIS.createComponent((_, props, {Slot}) => <>
+			<Slot name="header" is={ <h1/> }>Primary</Slot>{'\n'}
+			<Slot name="subHeader" is={ props.subHeaderEl }>Sub</Slot>{'\n'}
+			<Slot name="lastHeader" is={ [props.lastHeaderEl, <h4/>] }/>{'\n'}
+		</>);
+
+		it('defaults', () => {
+			expect(render(<WithIS/>)).toMatchSnapshot();
+		});
+
+		it('header is null', () => {
+			expect(render(<WithIS header={null}/>)).toMatchSnapshot();
+		});
+
+		it('header is undefined', () => {
+			expect(render(<WithIS header={undefined}/>)).toMatchSnapshot();
+		});
+
+		it('subHeaderEl is h2', () => {
+			expect(render(<WithIS subHeaderEl={<h2/>} />)).toMatchSnapshot();
+		});
+
+		it('subHeaderEl is h2 with override', () => {
+			expect(render(<WithIS subHeader={<>Wow!</>} subHeaderEl={<h2/>} />)).toMatchSnapshot();
+		});
+
+		it('lastHeaderEl is h3', () => {
+			expect(render(<WithIS lastHeaderEl={<h3/>} />)).toMatchSnapshot();
+		});
+
+		it('lastHeaderEl is null', () => {
+			expect(render(<WithIS lastHeaderEl={null} />)).toMatchSnapshot();
+		});
+
+		it('lastHeaderEl is undefined', () => {
+			expect(render(<WithIS lastHeaderEl={undefined} />)).toMatchSnapshot();
+		});
 	});
 
 	it('slots with nested', () => {

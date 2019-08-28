@@ -8,6 +8,8 @@ import {
 	LikeComponent,
 	ToIntersect,
 	CleanObject,
+	Meta,
+	GetMeta,
 } from '../core.types';
 import {
 	DepsDescriptor,
@@ -40,29 +42,28 @@ type GetDeps<P> = P extends {deps?: infer D} ? D : never;
 export type SlotProp<S extends SlotPropType> = null | (S extends (value: infer V) => infer R
 	? SlotWithValue<S, V, R> | R
 	: SlotWithoutValue<S> | S
-)
+) | Meta<S>
 
 type SlotWithValue<S extends SlotPropType, V, R> = (parent: S, value: V) => R
 type SlotWithoutValue<S extends SlotPropType> = (parent: S) => S
 
-type SlotPropTypeInfer<P> =
-	P extends SlotWithValue<infer T, any, any> ? T :
-	P extends SlotWithoutValue<infer T> ? T :
-	never
+type SlotPropTypeInfer<P> = ToIntersect<P> extends Meta<infer S> ? S : never;
 
 export type GetSlotsSpec<P extends object> = CleanObject<{
-	[K in keyof P]-?: SlotPropTypeInfer<ToIntersect<P[K]>>;
+	[K in keyof P]-?: SlotPropTypeInfer<P[K]>;
 }>
 
 type SlotComponentProps<N, T> = (
 	N extends 'children'
-		? {name?: 'default'}
+		? {name?: N}
 		: {name: N}
 ) & (
 	T extends (value: infer V) => any
 		? {value: V; children?: T; } // <Slot name="..." value="...">{(value) => ...}</Slot>
 		: {children?: T;} // <Slot name="...">...</Slot>
-)
+) & ({
+	is?: SlotElement | [SlotElement | undefined, SlotElement | undefined];
+})
 
 export type SlotComponent<S extends object> = (
 	(props: {
@@ -81,5 +82,11 @@ export type ComponentRender<D extends ComponentDescriptor<any, any, any>> = (
 ) => LikeFragment;
 
 type SlotValue = number | string | JSX.Element;
+
 export type SlotContent = SlotValue | SlotValue[];
 export type SlotPropType = SlotContent | ((value: object) => SlotContent);
+
+export type SlotElement = null | {
+	type: any;
+	props: object;
+}

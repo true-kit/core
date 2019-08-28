@@ -1,5 +1,5 @@
-import { createElement, ReactElement } from 'react';
-import { ComponentDescriptor, ComponentRender } from './component.types';
+import { createElement, ReactElement, cloneElement } from 'react';
+import { ComponentDescriptor, ComponentRender, SlotElement, SlotContent } from './component.types';
 import { createDescriptor, getDescriptorOverride } from '../core';
 import {
 	createDepsDescriptor,
@@ -84,10 +84,11 @@ type SlotProps = {
 	name: string;
 	value: any;
 	children: React.ReactNode;
+	is?: SlotElement | [SlotElement, SlotElement];
 }
 
-function Slot({name, children, value}: SlotProps) {
-	if (name == null || name === 'default') {
+function Slot({name, children, value, is}: SlotProps) {
+	if (name == null) {
 		name = 'children';
 	}
 
@@ -95,32 +96,58 @@ function Slot({name, children, value}: SlotProps) {
 	const scopeProps = (envScope !== null && envScope.ctx !== null) ? envScope.ctx.props : null;
 	const content = scopeProps != null ? scopeProps[name] : undefined;
 
+	if (is) {
+		if (!is.hasOwnProperty('type')) {
+			is = is[0] === null ? null : (is[0] || is[1] || null);
+		}
+	} else {
+		is = null;
+	}
+
+	// Слот не нужен, так сказали свыше!
 	if (content === null) {
 		return null;
 	}
 
-	// Перегрузка слота
+	// Переопределение слота
 	if (content !== undefined) {
+		// Это перегрузка
 		if (typeof content === 'function') {
 			const result = content(children, value);
 
+			// Слот не нужен
 			if (result === null) {
 				return null;
 			} else if (result !== undefined) {
-				return result;
+				return wrap(result, is);
 			}
 		} else {
-			return content;
+			return wrap(content, is);
 		}
 	}
 
-	if (children == null) {
+	// Значение есть, но оно именно null
+	if (children === null) {
 		return null;
+	} else if (children === undefined) {
+		return is; // возвращаем оборачиващий элемент
 	}
 
 	if (typeof children === 'function') {
-		return children(value);
+		return wrap(children(value), is);
 	}
 
-	return children;
+	return wrap(children, is);
+}
+
+function wrap(content: any, is: any) {
+	if (is !== null) {
+		content = content && cloneElement(
+			is as React.ReactElement,
+			is.props,
+			content,
+		);
+	}
+
+	return content;
 }
