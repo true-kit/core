@@ -19,6 +19,7 @@ npm i --save-dev @truekit/core
 - <a href="https://medium.com/@ibnRubaXa/truekit-intro-9bba91196cd6">🧰 TrueKit — 🐳, который сможет! (Бренд)</a>
 - <a href="https://medium.com/@ibnRubaXa/truekit-theming-b73b6ad2293d">🐳 TrueKit. Часть I. Темизация 👨🏻‍🎨.</a>
 - <a href="https://medium.com/@ibnRubaXa/truekit-deps-afd625fb8972">🐳 TrueKit. Часть II. Зависимости 💉</a>
+- <a href="https://medium.com/@ibnRubaXa/truekit-slots-a193b9feeabc">🐳 TrueKit. Часть III. Слоты 🎰.</a>
 
 ---
 
