@@ -1,0 +1,10 @@
+.jest
+.storybook
+node_modules
+
+# Ignore the .ts files
+**/*.ts
+**/*.tsx
+
+# Revert the .d.ts files
+!**/*.d.ts

@@ -97,3 +97,34 @@ export type DescriptorOverrideIndex<T extends DescriptorOverride> = Map<
 
 export type LikeFragment = JSX.Element;
 export type LikeComponent<P extends object> = (props: P) => LikeFragment;
+
+export type IntersectionOf<U> =
+	(U extends any ? (_: U) => void : never) extends  ((_: infer I) => void) ? I : never
+;
+
+export type PopUnion<U> = (
+	IntersectionOf<U extends any ? (_: U) => void : never> extends ((_: infer E) => void) ? E : never
+);
+
+export type IsUnion<T> = [T] extends [IntersectionOf<T>] ? false : true;
+
+export type ArrayPush<INP extends any[], ELM> =
+    ((_: any, ...inp: INP) => void) extends ((...out: infer OUT) => void)
+        ? { [K in keyof OUT]-?: K extends keyof INP ? INP[K] : ELM }
+        : never
+    ;
+
+export type TupleOf<
+    U extends string,
+    F = PopUnion<U>,
+> = F extends U
+    ? IsUnion<U> extends true
+		? { [K in U]: TupleOfNext<Exclude<U, K>, K>; }[F]
+		: [U]
+    : []
+;
+
+type TupleOfNext<U extends string, K extends string> = {
+	next: ArrayPush<TupleOf<U>, K>;
+	end: [U, K];
+}[IsUnion<U> extends true ? 'next' : 'end'];

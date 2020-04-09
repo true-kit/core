@@ -4,7 +4,13 @@
   "description": "The CORE of TrueKit™",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build-ts": "tsc",
+    "build": "npm run build-ts && npm run build-i18n && npm run build-dist",
+    "build-clean": "git clean -f",
+    "build-dist": "webpack",
+    "prepublishOnly": "npm test && npm run build",
+    "postpublish": "npm run build-clean"
   },
   "keywords": [
     "css",
